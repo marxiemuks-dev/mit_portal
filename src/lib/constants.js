@@ -1,0 +1,30 @@
+// src/constants/applicantOptions.js
+
+export const municipalities = [
+  "BONGAO",
+  "PANGLIMA SUGALA",
+  "SIMUNUL",
+  "SITANGKAI",
+  "SOUTH UBIAN",
+  "TANDUBAS",
+  "LANGUYAN",
+  "MAPUN",
+  "SAPA-SAPA",
+  "SIBUTU",
+  "TURTLE ISLANDS"
+];
+
+export const schools = [
+  "MAHARDIKA INSTITUTE OF TECHNOLOGY",
+  "MINDANAO STATE UNIVERSITY TAWI-TAWI COLLEGE OF TECHNOLOGY AND OCEANOGRAPHY",
+  "NOTRE DAME OF BONGAO",
+  "PHILIPPINE LAST FRONTIER COLLEGE",
+  "TAWI-TAWI CRIMINAL JUSTICE COLLEGE",
+  "TAWI-TAWI REGIONAL AGRICULTURAL COLLEGE",
+  "OTHER SCHOOL"
+];
+
+export const roles = [
+ { id:1, value:'ADMIN'},
+ { id:2, value:'ENCODER'}
+]
