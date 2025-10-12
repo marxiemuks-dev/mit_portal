@@ -54,7 +54,7 @@ export default function UserManagement() {
   });
 
   const dispatch = useDispatch();
-  const roles = ["registrar", "cashier", "faculty", "admin"];
+  const roles = ["admin", "cashier", "faculty","registrar","student"];
 
   // DataGrid columns
   const columns = [

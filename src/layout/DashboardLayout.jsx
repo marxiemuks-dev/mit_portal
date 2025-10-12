@@ -19,6 +19,7 @@ import DashboardS from '../pages/student/DashboardS';
 import EnrollmentS from '../pages/student/EnrollmentS';
 import GradesS from '../pages/student/GradesS'
 import NotificationS from '../pages/student/NotificationS';
+import SchoolCalendarPageS from '../pages/student/SchoolCalendarPage';
 import ScheduleS from '../pages/student/ScheduleS';
 
 import GradesF from '../pages/faculty/GradesF'
@@ -75,21 +76,38 @@ const DashboardLayout = () => {
                   <Route path="/profile" element={<UserProfilePage />} />
                 </>
               )}
+              {user?.role === 'cashier' && (
+                <>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/notification" element={<NotificationsPage />} />
+                  <Route path="/calendar" element={<SchoolCalendar/>} />
+                  <Route path="/account" element={<UserManagement />} />
+                  <Route path="/profile" element={<UserProfilePage />} />
+                </>
+              )}
               {user?.role === 'student' && (
                 <>
-                  <Route path="/" element={<EnrollmentS />} />
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/enrollment" element={<EnrollmentS />} />
                   <Route path="/schedule" element={<ScheduleS />} />
                   <Route path="/grades" element={<GradesS />} />
                   <Route path="/notification" element={<NotificationS />} />
-                  {/* You can add more student-specific routes here */}
+                  <Route path="/calendar" element={<SchoolCalendarPageS/>} />
+                  <Route path="/profile" element={<UserProfilePage />} />
                 </>
               )}
-
               {user?.role === 'faculty' && (
                 <>
-                  <Route path="/" element={<ScheduleF />} />
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/schedule" element={<ScheduleF />} />
                   <Route path="/grades" element={<GradesF />} />
-                  <Route path="/notification" element={<NotificationF />} />
+                  <Route path="/notification" element={<NotificationsPage />} />
+                  <Route path="/calendar" element={<SchoolCalendar/>} />
+                  <Route path="/profile" element={<UserProfilePage />} />
+                  {/* <Route path="/" element={<ScheduleF />} />
+                  <Route path="/grades" element={<GradesF />} />
+                  <Route path="/notification" element={<NotificationF />} /> */}
                   {/* You can add more student-specific routes here */}
                 </>
               )}

@@ -74,7 +74,7 @@ export default function Grades() {
 
 
   const computeFinalGrade = (student) => {
-    return ((student.prelim + student.midterm + student.final) / 3).toFixed(2);
+    return ((student.premid + student.midterm + student.prefinal + student.finalterm) / 4).toFixed(2);
   };
 
   const handlePrint = () => {
@@ -163,7 +163,7 @@ export default function Grades() {
     setLoadingAdd(true);
     try {
       console.log(studentSubjectData)
-      const result = await dispatch(addStudentGrades(0,0,0,studentSubjectData.studentId,studentSubjectData.subjectId))
+      const result = await dispatch(addStudentGrades(0,0,0,0,studentSubjectData.studentId,studentSubjectData.subjectId))
       console.log(result)
       if(result.status === "error"){
 
@@ -358,7 +358,7 @@ export default function Grades() {
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Teacher: {selectedSubject.instructor}
             </Typography>
-            <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
+            {/* <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
               <Table>
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
                   <TableRow>
@@ -431,51 +431,97 @@ export default function Grades() {
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </TableContainer> */}
+                        <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
+                          <Table>
+                            <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+                              <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell>Student No</TableCell>
+                                <TableCell>Student Name</TableCell>
+                                <TableCell>Pre-Mid</TableCell>
+                                <TableCell>Midterm</TableCell>
+                                <TableCell>Pre-Final</TableCell>
+                                <TableCell>Final-Term</TableCell>
+                                <TableCell>Average</TableCell>
+                                <TableCell>Action</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {enrolledStudent.map((student, index) => (
+                                <TableRow key={student.id}>
+                                  <TableCell>{index + 1}</TableCell>
+                                  <TableCell>{student.student_no}</TableCell>
+                                  <TableCell>{student.student_name}</TableCell>
+                                  <TableCell>
+                                    <TextField
+                                      disabled
+                                      type="number"
+                                      size="small"
+                                      value={student.premid}
+                                      onChange={(e) =>
+                                        handleGradeChange(student.id, "premid", e.target.value)
+                                      }
+                                      sx={{ width: 80 }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <TextField
+                                      disabled
+                                      type="number"
+                                      size="small"
+                                      value={student.midterm}
+                                      onChange={(e) =>
+                                        handleGradeChange(student.id, "midterm", e.target.value)
+                                      }
+                                      sx={{ width: 80 }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <TextField
+                                      disabled
+                                      type="number"
+                                      size="small"
+                                      value={student.prefinal}
+                                      onChange={(e) =>
+                                        handleGradeChange(student.id, "prefinal", e.target.value)
+                                      }
+                                      sx={{ width: 80 }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <TextField
+                                      disabled
+                                      type="number"
+                                      size="small"
+                                      value={student.finalterm}
+                                      onChange={(e) =>
+                                        handleGradeChange(student.id, "finalterm", e.target.value)
+                                      }
+                                      sx={{ width: 80 }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>{computeFinalGrade(student)}</TableCell>
+                                  <TableCell>
+                                  <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={() => {
+                                      setSelectedGrade(student);
+                                      setOpenEditDialog(true);
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
 
-{/* <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2, boxShadow: 3 }}>
-  <Table>
-    <TableHead sx={{ bgcolor: "#1976d2" }}>
-      <TableRow>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>#</TableCell>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Student No</TableCell>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Student Name</TableCell>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Prelim</TableCell>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Midterm</TableCell>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Final</TableCell>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Average</TableCell>
-        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Action</TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {enrolledStudent.map((student, index) => (
-        <TableRow key={student.id} hover>
-          <TableCell>{index + 1}</TableCell>
-          <TableCell>{student.student_no}</TableCell>
-          <TableCell>{student.student_name}</TableCell>
-          <TableCell>{student.prelim}</TableCell>
-          <TableCell>{student.midterm}</TableCell>
-          <TableCell>{student.final}</TableCell>
-          <TableCell>{computeFinalGrade(student)}</TableCell>
-          <TableCell>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                setSelectedGrade(student);
-                setOpenEditDialog(true);
-              }}
-            >
-              Edit
-            </Button>
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-</TableContainer> */}
 
-            <Dialog
+            {/* <Dialog
               open={openEditDialog}
               onClose={() => setOpenEditDialog(false)}
               fullWidth
@@ -561,8 +607,112 @@ export default function Grades() {
                   Save
                 </Button>
               </DialogActions>
+            </Dialog> */}
+            <Dialog
+              open={openEditDialog}
+              onClose={() => setOpenEditDialog(false)}
+              fullWidth
+              maxWidth="sm"
+            >
+              <DialogTitle>Edit Student Grade</DialogTitle>
+              <DialogContent>
+                {selectedGrade && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      {selectedGrade.student_name} ({selectedGrade.student_no})
+                    </Typography>
+                    <TextField
+                      margin="normal"
+                      label="Pre-Mid"
+                      type="number"
+                      fullWidth
+                      value={selectedGrade.premid || ""}
+                      onChange={(e) =>
+                        setSelectedGrade({ ...selectedGrade, premid: e.target.value })
+                      }
+                    />
+                    <TextField
+                      margin="normal"
+                      label="Mid-Term"
+                      type="number"
+                      fullWidth
+                      value={selectedGrade.midterm || ""}
+                      onChange={(e) =>
+                        setSelectedGrade({ ...selectedGrade, midterm: e.target.value })
+                      }
+                    />
+                    <TextField
+                      margin="normal"
+                      label="Pre-Final"
+                      type="number"
+                      fullWidth
+                      value={selectedGrade.prefinal || ""}
+                      onChange={(e) =>
+                        setSelectedGrade({ ...selectedGrade, prefinal: e.target.value })
+                      }
+                    />
+                    <TextField
+                      margin="normal"
+                      label="Final-Term"
+                      type="number"
+                      fullWidth
+                      value={selectedGrade.finalterm || ""}
+                      onChange={(e) =>
+                        setSelectedGrade({ ...selectedGrade, finalterm: e.target.value })
+                      }
+                    />
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+                <Button
+                  variant="contained"
+                  onClick={async () => {
+                    try {
+                      const result = await dispatch(
+                        updateStudentGrade(
+                          selectedGrade.id,
+                          selectedGrade.premid,
+                          selectedGrade.midterm,
+                          selectedGrade.prefinal,
+                          selectedGrade.finalterm
+                        )
+                      );
+                      console.log(result)
+                      if(result.status==="success"){
+                        setSnackbar({
+                          open: true,
+                          message: "✅ Grade updated successfully!",
+                          severity: "success",
+                        });
+                      }else{
+                        setSnackbar({
+                          open: true,
+                          message: result.message,
+                          severity: "error",
+                        });
+                      }
+                      setOpenEditDialog(false);
+                      // Refresh table
+                      const refresh = await dispatch(
+                        getStudentGradesBySchedule(selectedSubject.id)
+                      );
+                      setEnrolledStudent(refresh.data);
+                    } catch (error) {
+                      console.error(error);
+                      setSnackbar({
+                        open: true,
+                        message: "❌ Failed to update grade",
+                        severity: "error",
+                      });
+                    }
+                  }}
+                >
+                  Save
+                </Button>
+              </DialogActions>
             </Dialog>
-
 
             <Box
               mt={3}

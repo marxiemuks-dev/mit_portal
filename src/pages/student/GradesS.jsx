@@ -37,71 +37,83 @@ export default function Grades() {
   const [filterSemester, setFilterSemester] = useState(semesters[0]);
   const [filterSchoolYear, setFilterSchoolYear] = useState(schoolYears[0]);
   const dispatch = useDispatch();
-  const [enrolledStudent, setEnrolledStudent] = useState([])
-
   const handleGradeChange = (studentId, field, value) => {
     
-    // setSelectedSubject((prev) => ({
-    //   ...prev,
-    //   students: prev.students.map((student) =>
-    //     student.id === studentId
-    //       ? { ...student, [field]: Number(value) }
-    //       : student
-    //   ),
-    // }));
   };
 
   const computeFinalGrade = (student) => {
-    return ((student.prelim + student.midterm + student.final) / 3).toFixed(2);
+    return ((student.premid + student.midterm + student.prefinal + student.finalterm) / 4).toFixed(2);
   };
 
-  const handlePrint = () => {
-  const printContent = document.getElementById("print-area");
-
-  if (!printContent) {
+const handlePrint = () => {
+  if (!studentGrades || studentGrades.length === 0) {
     alert("⚠️ No data to print. Make sure the table is rendered.");
     return;
   }
 
-  const newWin = window.open("", "", "width=900,height=650");
-  newWin.document.write(`
-    <html>
-      <head>
-        <title>Grade Report</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-          }
-          h2, p {
-            text-align: center;
-            margin: 0;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-          }
-          th, td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: center;
-          }
-          th {
-            background-color: #f5f5f5;
-          }
-        </style>
-      </head>
-      <body>
-        ${printContent.innerHTML}
-      </body>
-    </html>
-  `);
-  newWin.document.close();
-  newWin.focus();
-  newWin.print();
-  // newWin.close();
+  const doc = new jsPDF("p", "mm", "a4");
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Title and header
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Grade Report", pageWidth / 2, 20, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Semester: ${filterSemester}`, 20, 30);
+  doc.text(`School Year: ${filterSchoolYear}`, 20, 37);
+
+  if (currentStudent) {
+    doc.text(`Student Name: ${currentStudent.fullName || currentStudent.name || "N/A"}`, 20, 44);
+    doc.text(`Student No: ${currentStudent.userStudentID || "N/A"}`, 20, 51);
+  }
+
+  // Prepare table data
+  const tableColumn = [
+    "No.",
+    "Subject Code",
+    "Subject Title",
+    "Pre-Mid",
+    "Midterm",
+    "Pre-Final",
+    "Final-Term",
+    "Average",
+  ];
+
+  const tableRows = studentGrades.map((student, index) => [
+    index + 1,
+    student.schedule.subject_code,
+    student.schedule.desc_title,
+    student.premid || 0,
+    student.midterm || 0,
+    student.prefinal || 0,
+    student.finalterm || 0,
+    computeFinalGrade(student),
+  ]);
+
+  // Generate table
+  doc.autoTable({
+    startY: 60,
+    head: [tableColumn],
+    body: tableRows,
+    styles: { halign: "center" },
+    headStyles: { fillColor: [240, 240, 240] },
+    theme: "grid",
+  });
+
+  // Total subjects summary
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.text(
+    `Total Subjects: ${studentGrades.length}`,
+    20,
+    finalY
+  );
+
+  // Save the file
+  doc.save(`Grade_Report_${filterSchoolYear.replace("/", "-")}.pdf`);
 };
+
 
  
   const [currentStudent, setCurrentStudent] = useState(null);
@@ -205,13 +217,13 @@ export default function Grades() {
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
                   <TableRow>
                     <TableCell>#</TableCell>
-                    <TableCell>Subject Code</TableCell>
-                    <TableCell>Descriptive Title</TableCell>
-                    <TableCell>Prelim</TableCell>
+                    <TableCell>Student No</TableCell>
+                    <TableCell>Student Name</TableCell>
+                    <TableCell>Pre-Mid</TableCell>
                     <TableCell>Midterm</TableCell>
-                    <TableCell>Final</TableCell>
+                    <TableCell>Pre-Final</TableCell>
+                    <TableCell>Final-Term</TableCell>
                     <TableCell>Average</TableCell>
-                    <TableCell>Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -221,42 +233,55 @@ export default function Grades() {
                       <TableCell>{student.schedule.subject_code}</TableCell>
                       <TableCell>{student.schedule.desc_title}</TableCell>
                       <TableCell>
-                        <TextField
-                          disabled
-                          type="number"
-                          size="small"
-                          value={student.prelim}
-                          onChange={(e) =>
-                            handleGradeChange(student.id, "prelim", e.target.value)
-                          }
-                          sx={{ width: 80 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          disabled
-                          type="number"
-                          size="small"
-                          value={student.midterm}
-                          onChange={(e) =>
-                            handleGradeChange(student.id, "midterm", e.target.value)
-                          }
-                          sx={{ width: 80 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          disabled
-                          type="number"
-                          size="small"
-                          value={student.final}
-                          onChange={(e) =>
-                            handleGradeChange(student.id, "final", e.target.value)
-                          }
-                          sx={{ width: 80 }}
-                        />
-                      </TableCell>
-                      <TableCell>{computeFinalGrade(student)}</TableCell>
+                                              <TextField
+                                                disabled
+                                                type="number"
+                                                size="small"
+                                                value={student.premid}
+                                                onChange={(e) =>
+                                                  handleGradeChange(student.id, "premid", e.target.value)
+                                                }
+                                                sx={{ width: 80 }}
+                                              />
+                                            </TableCell>
+                                            <TableCell>
+                                              <TextField
+                                                disabled
+                                                type="number"
+                                                size="small"
+                                                value={student.midterm}
+                                                onChange={(e) =>
+                                                  handleGradeChange(student.id, "midterm", e.target.value)
+                                                }
+                                                sx={{ width: 80 }}
+                                              />
+                                            </TableCell>
+                                            <TableCell>
+                                              <TextField
+                                                disabled
+                                                type="number"
+                                                size="small"
+                                                value={student.prefinal}
+                                                onChange={(e) =>
+                                                  handleGradeChange(student.id, "prefinal", e.target.value)
+                                                }
+                                                sx={{ width: 80 }}
+                                              />
+                                            </TableCell>
+                                            <TableCell>
+                                              <TextField
+                                                disabled
+                                                type="number"
+                                                size="small"
+                                                value={student.finalterm}
+                                                onChange={(e) =>
+                                                  handleGradeChange(student.id, "finalterm", e.target.value)
+                                                }
+                                                sx={{ width: 80 }}
+                                              />
+                                            </TableCell>
+                                            <TableCell>{computeFinalGrade(student)}</TableCell>
+
                       <TableCell>
                     </TableCell>
                     </TableRow>
@@ -271,7 +296,7 @@ export default function Grades() {
               alignItems="center"
             >
               <Typography variant="body1">
-                Total Students:
+                Total Subjects:
                 <strong>{studentGrades.length}</strong>
               </Typography>
               <Button variant="contained" color="primary" onClick={handlePrint}>

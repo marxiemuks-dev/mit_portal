@@ -164,7 +164,6 @@ export default function Grades() {
       setOpenAddDialog(false);
     }
   };
-
   useEffect(() => {
     const fetchEnrollments = async () => {
       try {
@@ -537,8 +536,6 @@ export default function Grades() {
                 </Button>
               </DialogActions>
             </Dialog>
-
-
             <Box
               mt={3}
               display="flex"

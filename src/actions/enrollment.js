@@ -1,5 +1,5 @@
 import enrollmentService from "../service/enrollment.service";
-import { ENROLL_STUDENT, GET_ALL_OFFERING, GET_STUDENT_ENROLLED, UPDATE_ENROLL_STUDENT } from "./types";
+import { DELETE_STUDENT_ENROLLED, ENROLL_STUDENT, GET_ALL_OFFERING, GET_STUDENT_ENROLLED, UPDATE_ENROLL_STUDENT } from "./types";
 
 export const enrollStudent = (studentID,currentCourse,currentYearLevel,currentSemester,currentSchoolYear,enrollmentStatus,guardianEmail,studentEmail) => (dispatch) => {
   return enrollmentService.enrollStudent(studentID,currentCourse,currentYearLevel,currentSemester,currentSchoolYear,enrollmentStatus,guardianEmail,studentEmail).then(
@@ -58,6 +58,18 @@ export const getEnrollmentById = (currentUserID) => (dispatch) => {
     (response)=>{
       dispatch({
         type: GET_STUDENT_ENROLLED,
+        payload: response
+      });
+      return response;
+    },
+    (error) => error
+  )
+}
+export const deleteEnrollment = (id) => (dispatch) => {
+  return enrollmentService.deleteEnrollment(id).then(
+    (response)=>{
+      dispatch({
+        type: DELETE_STUDENT_ENROLLED,
         payload: response
       });
       return response;

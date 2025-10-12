@@ -33,6 +33,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+  const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
   const semesters = ["1st Semester", "2nd Semester", "Summer"];
   const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
 
@@ -60,6 +61,7 @@ export default function SchedulePage() {
     severity: "success"
   });
 
+  const [yearLevelFilter, setYearLevelFilter] = useState("All Year Level");
   const [filterCourse, setFilterCourse] = useState("All Courses");
   const [filterSemester, setFilterSemester] = useState(semesters[0]);
   const [filterSchoolYear, setFilterSchoolYear] = useState(schoolYears[0]);
@@ -81,6 +83,7 @@ export default function SchedulePage() {
       try {
         const result = await dispatch(getAllSchedule());
 
+        console.log(result)
         if (!result || !result.data) {
           console.error("No schedule data returned:", result);
           return;
@@ -351,6 +354,14 @@ const handlePrint = () => {
             </MenuItem>
           ))}
         </Select>
+        {/* <Select value={yearLevelFilter} onChange={(e) => setYearLevelFilter(e.target.value)}>
+          <MenuItem value="All Year Level">All Year Level</MenuItem>
+          {yearLevels.map((c) => (
+            <MenuItem key={c} value={c}>
+              {c}
+            </MenuItem>
+          ))}
+        </Select> */}
         <Select value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
           {semesters.map((s) => (
             <MenuItem key={s} value={s}>

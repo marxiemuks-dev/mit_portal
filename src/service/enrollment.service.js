@@ -83,11 +83,31 @@ const getEnrollmentById = (currentUserID) => {
       };
     });
 };
+const deleteEnrollment = (id) => {
+  return axiosInstance
+    .delete(`${API_URL}enrollment/${id}`)
+    .then((response) => {
+      return {
+        message: response.data.message,
+        status: response.data.status,
+        data: response.data.enrollment
+      };
+    })
+    .catch((error) => {
+      console.error("Error fetching enrollments:", error);
+      return {
+        message: error.response?.data?.message || "Failed to fetch enrollments",
+        status: false,
+        data: []
+      };
+    });
+};
 
 export default {
     enrollStudent,
     getAllEnrollments,
     updateEnrollment,
     getEnrollmentsBySemesterAndYear,
-    getEnrollmentById
+    getEnrollmentById,
+    deleteEnrollment
 };

@@ -278,7 +278,7 @@ export default function BillingPage() {
     return total;
   }
   function calculateSubsidized(totalMisc) {
-    const discountPercent = 14.75;
+    const discountPercent = 30;
     const discountAmount = (totalMisc * discountPercent) / 100;
     const total = totalMisc - discountAmount;
     return {total,discountAmount};

@@ -215,30 +215,6 @@ const filteredSchedules = schedules.filter(
     s.schoolYear === filterSchoolYear
 );
 
-  const columns = [
-    { field: "subjectCode", headerName: "Subject Code", flex: 1 },
-    { field: "descriptiveTitle", headerName: "Descriptive Title", flex: 2 },
-    { field: "units", headerName: "Units", flex: 1 },
-    { field: "time", headerName: "Time", flex: 1.5 },
-    { field: "day", headerName: "Day", flex: 1 },
-    { field: "room", headerName: "Room", flex: 1 },
-    { field: "instructor", headerName: "Instructor", flex: 1.5 },
-    // {
-    //   field: "actions",
-    //   headerName: "Actions",
-    //   renderCell: (params) => (
-    //     <Button
-    //       startIcon={<Edit />}
-    //       variant="outlined"
-    //       size="small"
-    //       onClick={() => handleOpenDialog(params.row)}
-    //     >
-    //       Edit
-    //     </Button>
-    //   ),
-    //   flex: 1,
-    // },
-  ];
   const handlePrint = () => {
   const printContent = document.getElementById("print-area").innerHTML;
   const printWindow = window.open("", "", "width=900,height=700");
@@ -298,21 +274,6 @@ const filteredSchedules = schedules.filter(
           ))}
         </Select>
       </Box>
-      <Button
-        variant="contained"
-        startIcon={<Add />}
-        onClick={() => handleOpenDialog()}
-        sx={{ mb: 2 }}
-      >
-        Add New Schedule
-      </Button>
-      {/* <DataGrid
-        rows={filteredSchedules}
-        columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        sx={{minHeight:'70vh'}}
-      /> */}
       <Card id="print-area" sx={{ mt: 4, p: 2 }}>
   <CardContent>
     <Box

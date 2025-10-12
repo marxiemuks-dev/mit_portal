@@ -71,18 +71,31 @@ function ResponsiveAppBar() {
         {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Logout']
+    }else if(user?.role === 'cashier'){
+      pages = [
+        {id:1, pageName: "Dashboard", link: "" },
+        {id:6, pageName: "Calendar", link: "calendar" },
+        {id:5, pageName: "Billing", link: "billing" },
+        {id:7, pageName: "Notification", link: "notification" }
+      ];
+      settings = ['Profile','Logout']
     }
     else if(user?.role === 'student'){
       pages = [
-        {id:2, pageName: "Enrollment", link: "" },
+        {id:1, pageName: "Dashboard", link: "" },
+        {id:2, pageName: "Enrollment", link: "enrollment" },
+        {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
+        {id:6, pageName: "Calendar", link: "calendar" },
         {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Logout']
     }else if(user?.role === 'faculty'){
       pages = [
-        {id:2, pageName: "Schedule", link: "" },
+        {id:1, pageName: "Dashboard", link: "" },
+        {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
+        {id:6, pageName: "Calendar", link: "calendar" },
         {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Logout']

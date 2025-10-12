@@ -76,7 +76,7 @@ export default function SchedulePage() {
     room: "",
     instructor: "",
   });
-
+  
       const fetchSchedule = async () => {
       try {
         const result = await dispatch(getAllSchedule());

@@ -29,7 +29,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import { useDispatch } from "react-redux";
-import { getAllEnrollments, updateEnrollment } from "../../actions/enrollment";
+import { deleteEnrollment, getAllEnrollments, updateEnrollment } from "../../actions/enrollment";
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import jsPDF from "jspdf";
@@ -45,6 +45,7 @@ export default function EnrolledList() {
   const [loading, setLoading] = useState(false);
 
   // 🔹 filters with default values
+  const [yearLevelFilter, setYearLevelFilter] = useState("All Year Level");
   const [semesterFilter, setSemesterFilter] = useState("1st Semester");
   const [schoolYearFilter, setSchoolYearFilter] = useState("2024-2025");
   const [courseFilter, setCourseFilter] = useState("All Courses"); // ✅ NEW
@@ -81,7 +82,6 @@ export default function EnrolledList() {
   useEffect(() => {
     fetchEnrollments();
   }, []);
-
 const handleEditClick = (enrollment) => {
   const enrollmentCopy = { ...enrollment };
 
@@ -89,7 +89,18 @@ const handleEditClick = (enrollment) => {
 
   setEditDialogOpen(true);
 };
+const handleDeleteClick = async (enrollment) => {
+  const enrollmentCopy = { ...enrollment };
+  console.log(enrollmentCopy)
+  try{
+    const result = await dispatch(deleteEnrollment(enrollmentCopy.id))
+    console.log(result)
+  }catch(error){
 
+  }finally{
+    fetchEnrollments()
+  }
+};
 
   const handleEditChange = (field, value) => {
     setSelectedEnrollment((prev) => ({
@@ -126,12 +137,12 @@ const handleEditClick = (enrollment) => {
       setLoading(false)
     }
   };
-
   // ✅ Filter enrollments by semester, school year, and course
   const filteredEnrollments = enrollments.filter(
     (en) =>
       en.current_semester === semesterFilter &&
       en.current_school_year === schoolYearFilter &&
+      (yearLevelFilter === "All Year Level" || en.current_year_level === yearLevelFilter) &&
       (courseFilter === "All Courses" || en.current_course === courseFilter)
   );
   
@@ -290,6 +301,21 @@ const handlePrint = () => {
             ))}
           </Select>
         </FormControl>
+        <FormControl sx={{ minWidth: 180 }}>
+          <InputLabel>Year Level</InputLabel>
+          <Select
+            value={yearLevelFilter}
+            onChange={(e) => setYearLevelFilter(e.target.value)}
+            label="Year Level"
+          >
+            <MenuItem value="All Year Level">All Year Level</MenuItem>
+            {yearLevels.map((year) => (
+              <MenuItem key={year} value={year}>
+                {year}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
       <Card id="print-area">  {/* ✅ Added id here */}
         <CardContent>
@@ -348,7 +374,7 @@ const handlePrint = () => {
                           color="error"
                           size="small"
                         >
-                          <IconButton color="primary" size="small" title="Delete">
+                          <IconButton onClick={()=>{handleDeleteClick(en)}} color="primary" size="small" title="Delete">
                             <DeleteIcon />
                           </IconButton>
                         </Button>
