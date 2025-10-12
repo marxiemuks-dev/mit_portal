@@ -63,6 +63,18 @@ const DashboardLayout = () => {
                   <Route path="/profile" element={<UserProfilePage />} />
                 </>
               )}
+              {user?.role === 'registrar' && (
+                <>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/enrollment" element={<Enrollment />} />
+                  <Route path="/list" element={<EnrolledList />} />
+                  <Route path="/schedule" element={<Schedule />} />
+                  <Route path="/grades" element={<Grades />} />
+                  <Route path="/notification" element={<NotificationsPage />} />
+                  <Route path="/calendar" element={<SchoolCalendar/>} />
+                  <Route path="/profile" element={<UserProfilePage />} />
+                </>
+              )}
               {user?.role === 'student' && (
                 <>
                   <Route path="/" element={<EnrollmentS />} />
