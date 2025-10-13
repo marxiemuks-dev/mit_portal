@@ -52,3 +52,15 @@ export const getStudentGradesByStudentId = (currentStudentID) => (dispatch) => {
         return error
     })
 }
+export const getStudentGradeEvaluation = (studentID) => (dispatch) => {
+    return gradeService.getStudentGradeEvaluation(studentID)
+    .then((response)=> {
+        dispatch({
+            type: GET_GRADES_BY_SCHEDULE,
+            payload: response.data
+        });
+        return response
+    },(error) => {
+        return error
+    })
+}

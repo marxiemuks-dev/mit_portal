@@ -77,6 +77,8 @@ export default function SchedulePage() {
     day: "",
     room: "",
     instructor: "",
+    yearLevel: "",
+    section: ""
   });
 
       const fetchSchedule = async () => {
@@ -102,7 +104,9 @@ export default function SchedulePage() {
           course: s.course,
           semester: s.semester,
           schoolYear: s.school_year,
-          instructor_id: s.instructor.id
+          instructor_id: s.instructor.id,
+          section: s.section,
+          yearLevel: s.year_level
         }));
 
         setSchedules(formattedSchedules);
@@ -175,6 +179,8 @@ const handleSaveSchedule = async () => {
       day,
       room,
       instructor,
+      yearLevel,
+      section
     } = newSchedule;
 
     let response;
@@ -188,7 +194,9 @@ const handleSaveSchedule = async () => {
           time,
           day,
           room,
-          instructor))
+          instructor,
+          yearLevel,
+          section))
       console.log(response)
     }else {
       response = await dispatch(
@@ -202,7 +210,9 @@ const handleSaveSchedule = async () => {
           time,
           day,
           room,
-          instructor
+          instructor,
+          yearLevel,
+          section
         )
       );
     }
@@ -235,7 +245,8 @@ const filteredSchedules = schedules.filter(
   (s) =>
     (filterCourse === "All Courses" || s.course === filterCourse) &&
     s.semester === filterSemester &&
-    s.schoolYear === filterSchoolYear
+    s.schoolYear === filterSchoolYear &&
+    (yearLevelFilter === "All Year Level" || s.yearLevel === yearLevelFilter)
 );
 
 const handlePrint = () => {
@@ -331,12 +342,13 @@ const handlePrint = () => {
       day: schedule.day,
       room: schedule.room,
       instructor: schedule.instructor_id,
+      yearLevel: schedule.yearLevel,
+      section: schedule.section
     });
 
     // Open the dialog
     setOpenDialog(true);
   };
-
 
   return (
     <Box p={3} sx={{ bgcolor: "#f4f6f8" }}>
@@ -354,14 +366,14 @@ const handlePrint = () => {
             </MenuItem>
           ))}
         </Select>
-        {/* <Select value={yearLevelFilter} onChange={(e) => setYearLevelFilter(e.target.value)}>
+        <Select value={yearLevelFilter} onChange={(e) => setYearLevelFilter(e.target.value)}>
           <MenuItem value="All Year Level">All Year Level</MenuItem>
           {yearLevels.map((c) => (
             <MenuItem key={c} value={c}>
               {c}
             </MenuItem>
           ))}
-        </Select> */}
+        </Select>
         <Select value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
           {semesters.map((s) => (
             <MenuItem key={s} value={s}>
@@ -412,6 +424,8 @@ const handlePrint = () => {
                   <TableCell>Time</TableCell>
                   <TableCell>Day</TableCell>
                   <TableCell>Room</TableCell>
+                  <TableCell align="center">Section</TableCell>
+                  <TableCell>Year Level</TableCell>
                   <TableCell>Instructor</TableCell>
                   <TableCell align="center">Actions</TableCell>
                 </TableRow>
@@ -426,6 +440,8 @@ const handlePrint = () => {
                     <TableCell>{row.time}</TableCell>
                     <TableCell>{row.day}</TableCell>
                     <TableCell>{row.room}</TableCell>
+                    <TableCell align="center">{row.section}</TableCell>
+                    <TableCell>{row.yearLevel}</TableCell>
                     <TableCell>{row.instructor}</TableCell>
                     <TableCell align="center">
                       <IconButton size="small" onClick={() => openEditDialog(row)} title="Edit">
@@ -511,7 +527,20 @@ const handlePrint = () => {
               </MenuItem>
             ))}
           </TextField>
-
+          
+          <TextField
+            label="Year Level"
+            select
+            fullWidth
+            value={newSchedule.yearLevel}
+            onChange={(e) => setNewSchedule({ ...newSchedule, yearLevel: e.target.value })}
+          >
+            {yearLevels.map((sy, idx) => (
+              <MenuItem key={idx} value={sy}>
+                {sy}
+              </MenuItem>
+            ))}
+          </TextField>
           {/* Subject Code */}
           <TextField
             label="Subject Code"
@@ -561,6 +590,12 @@ const handlePrint = () => {
             fullWidth
             value={newSchedule.room}
             onChange={(e) => setNewSchedule({ ...newSchedule, room: e.target.value })}
+          />
+           <TextField
+            label="Section"
+            fullWidth
+            value={newSchedule.section}
+            onChange={(e) => setNewSchedule({ ...newSchedule, section: e.target.value })}
           />
 
           {/* Instructor */}

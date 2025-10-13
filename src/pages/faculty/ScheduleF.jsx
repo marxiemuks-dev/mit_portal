@@ -11,6 +11,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   MenuItem,
   Paper,
   Select,
@@ -24,24 +25,30 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import { Add } from "@mui/icons-material";
+import { Add, Delete, Edit } from "@mui/icons-material";
 import axiosInstance from "../../API/AXIOS_INSTANCE"
 import { useDispatch } from "react-redux";
-import { addSchedule, getAllSchedule } from "../../actions/schedule";
-import { useNavigate } from "react-router-dom";
-// mock data for courses, semesters, etc.
-  const courses = [
-    'Bachelor of Science in Elementary Education',
-    'Bachelor of Science in Criminology',
-    'Bachelor of Science in Engineering',
-    'Bachelor of Science in Information Technology',
-    'Bachelor of Science in Nursing',
-    'HRM (Hotel and Restaurant Management)'
-  ];
+import { addSchedule, deleteSchedule, getAllSchedule, updateSchedule } from "../../actions/schedule";
+import EditIcon from "@mui/icons-material/Edit";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { useNavigate } from 'react-router-dom';
 
-const semesters = ["1st Semester", "2nd Semester"];
-const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
+  const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+  const semesters = ["1st Semester", "2nd Semester", "Summer"];
+  const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
+
+  // Options for dropdowns
+  const courses = [
+    "Bachelor of Science in Business Administration",
+    "Bachelor of Science in Criminology",
+    "Bachelor of Science in Elementary Education",
+    "Bachelor of Science in Engineering",
+    "Bachelor of Science in Information Technology",
+    "Bachelor of Science in Nursing",
+    "Bachelor of Science in Social Work",
+    "HRM (Hotel and Restaurant Management)",
+  ];
 
 export default function SchedulePage() {
   const [schedules, setSchedules] = useState([]);
@@ -55,10 +62,13 @@ export default function SchedulePage() {
     severity: "success"
   });
 
+  const [yearLevelFilter, setYearLevelFilter] = useState("All Year Level");
   const [filterCourse, setFilterCourse] = useState("All Courses");
   const [filterSemester, setFilterSemester] = useState(semesters[0]);
   const [filterSchoolYear, setFilterSchoolYear] = useState(schoolYears[0]);
   const [facultyList, setFacultyList] = useState([]); // 👈 instructors list
+      const navigate = useNavigate();
+      const [currentStudent, setCurrentStudent] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
     course: courses[0],
     semester: semesters[0],
@@ -70,17 +80,21 @@ export default function SchedulePage() {
     day: "",
     room: "",
     instructor: "",
+    yearLevel: "",
+    section: ""
   });
-    const navigate = useNavigate();
-      const [currentStudent, setCurrentStudent] = useState([]);
 
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      const result = await dispatch(getAllSchedule())
-      console.log(result)
-      const storedUser = localStorage.getItem("mitportal_user");
+      const fetchSchedule = async () => {
+      try {
+        const result = await dispatch(getAllSchedule());
+
+        console.log(result)
+        if (!result || !result.data) {
+          console.error("No schedule data returned:", result);
+          return;
+        }
+        const storedUser = localStorage.getItem("mitportal_user");
             if (!storedUser) {
-              navigate("/signin");
               return;
             }
       
@@ -90,29 +104,36 @@ export default function SchedulePage() {
               setCurrentStudent(parsedUser)
             } catch (err) {
               console.error(err);
-              navigate("/signin");
             }
 
-      const formattedSchedules = result.data.map((s) => ({
-        id: s.schedule_id, // 👈 give DataGrid a proper id
-        subjectCode: s.subject_code,
-        descriptiveTitle: s.desc_title,
-        units: s.units,
-        time: s.time,
-        day: s.day,
-        room: s.room,
-        instructor: s.instructor_name, // if you included name in API
-        course: s.course,
-        semester: s.semester,
-        schoolYear: s.school_year,
-        instructor_name: s.instructor_name
-      }));
+        console.log(result)
+        const formattedSchedules = result.data.map((s) => ({
+          id: s.schedule_id, // 👈 give DataGrid a proper id
+          subjectCode: s.subject_code,
+          descriptiveTitle: s.desc_title,
+          units: s.units,
+          time: s.time,
+          day: s.day,
+          room: s.room,
+          instructor: s.instructor_name, // ensure backend returns instructor_name
+          course: s.course,
+          semester: s.semester,
+          schoolYear: s.school_year,
+          instructor_id: s.instructor.id,
+          section: s.section,
+          yearLevel: s.year_level
+        }));
 
-      setSchedules(formattedSchedules);
-    }
+        setSchedules(formattedSchedules);
+      } catch (error) {
+        console.error("Error fetching schedules:", error);
+      }
+    };
+  
+  useEffect(() => {
+    fetchSchedule();
+  }, [newSchedule, loading, dispatch]);
 
-    fetchSchedule()
-  }, [newSchedule,loading]);
   
   useEffect(() => {
     const fetchFaculty = async () => {
@@ -132,6 +153,27 @@ export default function SchedulePage() {
     fetchFaculty();
   }, []);
 
+  const handleOpenDialog = (schedule = null) => {
+
+    setSelectedSchedule(schedule);
+    if (schedule) {
+      setNewSchedule(schedule);
+    } else {
+      setNewSchedule({
+        course: courses[0],
+        semester: semesters[0],
+        schoolYear: schoolYears[0],
+        subjectCode: "",
+        descriptiveTitle: "",
+        units: "",
+        time: "",
+        day: "",
+        room: "",
+        instructor: "",
+      });
+    }
+    setOpenDialog(true);
+  };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -152,37 +194,44 @@ const handleSaveSchedule = async () => {
       day,
       room,
       instructor,
+      yearLevel,
+      section
     } = newSchedule;
-    const response = await dispatch(
-      addSchedule(
-        course,
-        semester,
-        schoolYear,
-        subjectCode,
-        descriptiveTitle,
-        units,
-        time,
-        day,
-        room,
-        instructor
-      )
-    );
-    if (response?.status === "success" || response?.status === true) {
-      // ✅ Update UI with the new schedule
-      if (selectedSchedule) {
-        setSchedules((prev) =>
-          prev.map((s) =>
-            s.id === selectedSchedule.id ? { ...newSchedule, id: s.id } : s
-          )
-        );
-      } else {
-        setSchedules((prev) => [
-          ...prev,
-          { ...newSchedule, id: prev.length + 1 },
-        ]);
-      }
 
-      // ✅ Show success snackbar
+    let response;
+    if (selectedSchedule) {
+      response = await dispatch(updateSchedule(selectedSchedule.id,course,
+          semester,
+          schoolYear,
+          subjectCode,
+          descriptiveTitle,
+          units,
+          time,
+          day,
+          room,
+          instructor,
+          yearLevel,
+          section))
+      console.log(response)
+    }else {
+      response = await dispatch(
+        addSchedule(
+          course,
+          semester,
+          schoolYear,
+          subjectCode,
+          descriptiveTitle,
+          units,
+          time,
+          day,
+          room,
+          instructor,
+          yearLevel,
+          section
+        )
+      );
+    }
+    if (response?.status === "success" || response?.status === true) {
       setSnackbar({
         open: true,
         message: selectedSchedule
@@ -207,64 +256,122 @@ const handleSaveSchedule = async () => {
 };
 
 
+// const filteredSchedules = schedules.filter(
+//   (s) =>
+//     (filterCourse === "All Courses" || s.course === filterCourse) &&
+//     s.semester === filterSemester &&
+//     s.schoolYear === filterSchoolYear &&
+//     (yearLevelFilter === "All Year Level" || s.yearLevel === yearLevelFilter)
+// );
 const filteredSchedules = schedules.filter(
   (s) =>
     (filterCourse === "All Courses" || s.course === filterCourse) &&
     s.semester === filterSemester &&
-    s.schoolYear === filterSchoolYear && s.instructor_name === currentStudent.instructor_name
+    s.schoolYear === filterSchoolYear &&
+    s.instructor === currentStudent.instructor_name &&
+    (yearLevelFilter === "All Year Level" || s.yearLevel === yearLevelFilter)
 );
 
-  const columns = [
-    { field: "subjectCode", headerName: "Subject Code", flex: 1 },
-    { field: "descriptiveTitle", headerName: "Descriptive Title", flex: 2 },
-    { field: "units", headerName: "Units", flex: 1 },
-    { field: "time", headerName: "Time", flex: 1.5 },
-    { field: "day", headerName: "Day", flex: 1 },
-    { field: "room", headerName: "Room", flex: 1 },
-    { field: "instructor", headerName: "Instructor", flex: 1.5 },
-    // {
-    //   field: "actions",
-    //   headerName: "Actions",
-    //   renderCell: (params) => (
-    //     <Button
-    //       startIcon={<Edit />}
-    //       variant="outlined"
-    //       size="small"
-    //       onClick={() => handleOpenDialog(params.row)}
-    //     >
-    //       Edit
-    //     </Button>
-    //   ),
-    //   flex: 1,
-    // },
+const handlePrint = () => {
+  if (filteredSchedules.length === 0) {
+    alert("⚠️ No schedule data available to print.");
+    return;
+  }
+
+  const doc = new jsPDF('p', 'pt', 'a4'); // portrait, points, A4
+
+  // Title & Info
+  doc.setFontSize(16);
+  doc.text("Class Schedule", 40, 40);
+  doc.setFontSize(12);
+  doc.text(`Semester: ${filterSemester}`, 40, 60);
+  doc.text(`School Year: ${filterSchoolYear}`, 40, 75);
+  doc.text(`Course: ${filterCourse === "All Courses" ? "All Courses" : filterCourse}`, 40, 90);
+
+  // Table columns
+  const tableColumn = [
+    "#",
+    "Subject Code",
+    "Descriptive Title",
+    "Units",
+    "Time",
+    "Day",
+    "Room",
+    "Instructor",
   ];
-  const handlePrint = () => {
-  const printContent = document.getElementById("print-area").innerHTML;
-  const printWindow = window.open("", "", "width=900,height=700");
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>Class Schedule</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h2 { text-align: center; margin-bottom: 20px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #555; padding: 8px; text-align: center; }
-          th { background-color: #f0f0f0; }
-        </style>
-      </head>
-      <body>
-        <h2>Class Schedule - ${filterSemester} (${filterSchoolYear})</h2>
-        <h3 style="text-align:center;">${filterCourse === "All Courses" ? "All Courses" : filterCourse}</h3>
-        ${printContent}
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
+
+  // Table rows
+  const tableRows = filteredSchedules.map((row, idx) => [
+    idx + 1,
+    row.subjectCode,
+    row.descriptiveTitle,
+    row.units,
+    row.time,
+    row.day,
+    row.room,
+    row.instructor,
+  ]);
+
+  // Generate table
+  doc.autoTable({
+    head: [tableColumn],
+    body: tableRows,
+    startY: 110,
+    theme: "grid",
+    headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+    styles: { fontSize: 10, cellPadding: 4 },
+  });
+
+  // Save PDF
+  doc.save(`Class_Schedule_${filterSemester}_${filterSchoolYear}.pdf`);
 };
 
+  const handleDelete = async (schedule) => {
+    console.log(schedule)
+    try{
+      const result = await dispatch(deleteSchedule(schedule.id))
+      if(result.status === "success"){
+        setSnackbar({
+          open: true,
+          message: result.message,
+          severity: "success",
+        });
+      }
+    }catch(error){
+      console.error("Save schedule error:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to save schedule. Please try again.",
+        severity: "error",
+      });
+    }finally{
+      fetchSchedule()
+    }
+  };
+
+  const openEditDialog = (schedule) => {
+      // Set the selected schedule
+    setSelectedSchedule(schedule);
+    console.log(schedule)
+    // Fill the form with schedule data
+    setNewSchedule({
+      course: schedule.course,
+      semester: schedule.semester,
+      schoolYear: schedule.schoolYear,
+      subjectCode: schedule.subjectCode,
+      descriptiveTitle: schedule.descriptiveTitle,
+      units: schedule.units,
+      time: schedule.time,
+      day: schedule.day,
+      room: schedule.room,
+      instructor: schedule.instructor_id,
+      yearLevel: schedule.yearLevel,
+      section: schedule.section
+    });
+
+    // Open the dialog
+    setOpenDialog(true);
+  };
 
   return (
     <Box p={3} sx={{ bgcolor: "#f4f6f8" }}>
@@ -277,6 +384,14 @@ const filteredSchedules = schedules.filter(
         <Select value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)}>
           <MenuItem value="All Courses">All Courses</MenuItem>
           {courses.map((c) => (
+            <MenuItem key={c} value={c}>
+              {c}
+            </MenuItem>
+          ))}
+        </Select>
+        <Select value={yearLevelFilter} onChange={(e) => setYearLevelFilter(e.target.value)}>
+          <MenuItem value="All Year Level">All Year Level</MenuItem>
+          {yearLevels.map((c) => (
             <MenuItem key={c} value={c}>
               {c}
             </MenuItem>
@@ -297,63 +412,84 @@ const filteredSchedules = schedules.filter(
           ))}
         </Select>
       </Box>
+      <Button
+        variant="contained"
+        startIcon={<Add />}
+        onClick={() => handleOpenDialog()}
+        sx={{ mb: 2 }}
+      >
+        Add New Schedule
+      </Button>
       <Card id="print-area" sx={{ mt: 4, p: 2 }}>
-  <CardContent>
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      mb={2}
-    >
-      <Typography variant="h6">
-        Class Schedule
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        Total Subjects: {filteredSchedules.length}
-      </Typography>
-    </Box>
+        <CardContent>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">
+              Class Schedule
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Total Subjects: {filteredSchedules.length}
+            </Typography>
+          </Box>
 
-    <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 2 }}>
-      <Table>
-        <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-          <TableRow>
-            <TableCell>#</TableCell>
-            <TableCell>Subject Code</TableCell>
-            <TableCell>Descriptive Title</TableCell>
-            <TableCell>Units</TableCell>
-            <TableCell>Time</TableCell>
-            <TableCell>Day</TableCell>
-            <TableCell>Room</TableCell>
-            <TableCell>Instructor</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredSchedules.map((row, idx) => (
-            <TableRow key={idx} hover>
-              <TableCell>{idx + 1}</TableCell>
-              <TableCell>{row.subjectCode}</TableCell>
-              <TableCell>{row.descriptiveTitle}</TableCell>
-              <TableCell>{row.units}</TableCell>
-              <TableCell>{row.time}</TableCell>
-              <TableCell>{row.day}</TableCell>
-              <TableCell>{row.room}</TableCell>
-              <TableCell>{row.instructor}</TableCell>
-            </TableRow>
-          ))}
-          {filteredSchedules.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                <Typography color="text.secondary">
-                  No schedule data available
-                </Typography>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </CardContent>
-</Card>
+          <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 2 }}>
+            <Table>
+              <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Subject Code</TableCell>
+                  <TableCell>Descriptive Title</TableCell>
+                  <TableCell>Units</TableCell>
+                  <TableCell>Time</TableCell>
+                  <TableCell>Day</TableCell>
+                  <TableCell>Room</TableCell>
+                  <TableCell align="center">Section</TableCell>
+                  <TableCell>Year Level</TableCell>
+                  <TableCell>Instructor</TableCell>
+                  <TableCell align="center">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredSchedules.map((row, idx) => (
+                  <TableRow key={idx} hover>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>{row.subjectCode}</TableCell>
+                    <TableCell>{row.descriptiveTitle}</TableCell>
+                    <TableCell>{row.units}</TableCell>
+                    <TableCell>{row.time}</TableCell>
+                    <TableCell>{row.day}</TableCell>
+                    <TableCell>{row.room}</TableCell>
+                    <TableCell align="center">{row.section}</TableCell>
+                    <TableCell>{row.yearLevel}</TableCell>
+                    <TableCell>{row.instructor}</TableCell>
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={() => openEditDialog(row)} title="Edit">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => handleDelete(row)} title="Add Payment">
+                        <Delete/>
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredSchedules.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                      <Typography color="text.secondary">
+                        No schedule data available
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
         <Button
           variant="outlined"
           color="secondary"
@@ -414,7 +550,20 @@ const filteredSchedules = schedules.filter(
               </MenuItem>
             ))}
           </TextField>
-
+          
+          <TextField
+            label="Year Level"
+            select
+            fullWidth
+            value={newSchedule.yearLevel}
+            onChange={(e) => setNewSchedule({ ...newSchedule, yearLevel: e.target.value })}
+          >
+            {yearLevels.map((sy, idx) => (
+              <MenuItem key={idx} value={sy}>
+                {sy}
+              </MenuItem>
+            ))}
+          </TextField>
           {/* Subject Code */}
           <TextField
             label="Subject Code"
@@ -464,6 +613,12 @@ const filteredSchedules = schedules.filter(
             fullWidth
             value={newSchedule.room}
             onChange={(e) => setNewSchedule({ ...newSchedule, room: e.target.value })}
+          />
+           <TextField
+            label="Section"
+            fullWidth
+            value={newSchedule.section}
+            onChange={(e) => setNewSchedule({ ...newSchedule, section: e.target.value })}
           />
 
           {/* Instructor */}

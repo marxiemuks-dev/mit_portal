@@ -123,7 +123,7 @@ const dispatch = useDispatch();
     "Bachelor of Science in Social Work",
     "HRM (Hotel and Restaurant Management)",
   ];
-  const scholarshipOptions = ['None', 'Academic Scholarship', 'Athletic Scholarship', 'Cultural Scholarship', 'Financial Aid', 'Other'];
+const scholarshipOptions = ['None', 'Academic Scholarship','Brother & Sister','HASSAN Scholarship','HALUN Scholarship','UNIFAST','TDP','AHME'];
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>

@@ -12,15 +12,20 @@ const getAllBilling = () => {
     })
 }
 
-const addBilling = (student_id,total_misc,previouse_balance,subsidized_by_school,full_payment,semester,school_year) => {
+const addBilling = (studentID,semester,school_year,scholarship_status,total_unit,tuition_fee,total_misc,total_misc_other_fee,previouse_balance,subsidized_by_school,full_payment,total_bill) => {
     return axiosInstance.post(API_URL + `billing`,{
-        student_id,
-        total_misc,
-        previouse_balance,
-        subsidized_by_school,
-        full_payment,
-        semester,
-        school_year
+      studentID,
+      semester,
+      school_year,
+      scholarship_status,
+      total_unit,
+      tuition_fee,
+      total_misc,
+      total_misc_other_fee,
+      previouse_balance,
+      subsidized_by_school,
+      full_payment,
+      total_bill
     }).then((response) => {
         return ({
             message: response.data.message,
@@ -61,15 +66,18 @@ const addPayment = (billing_id, payment_date, amount_paid, reference_no) => {
             return ({message:error.response.data.message,status:error.response.data.status})
   })
 }
-const updateBilling = (billing_id,total_misc,previouse_balance,subsidized_by_school,full_payment,semester,school_year,current_bill) => {
+const updateBilling = (billing_id,semester,school_year,scholarship_status,total_unit,tuition_fee,total_misc,total_misc_other_fee,previouse_balance,subsidized_by_school,full_payment,total_bill) => {
     return axiosInstance.put(API_URL + `billing/${billing_id}`,{
-      total_misc,
-      previouse_balance,
-      subsidized_by_school,
-      full_payment,
-      semester,
-      school_year,
-      current_bill,
+        semester,
+        school_year,
+        scholarship_status,
+        total_unit,
+        tuition_fee,
+        total_misc,
+        total_misc_other_fee,
+        previouse_balance,
+        subsidized_by_school,
+        full_payment,total_bill
     }).then((response) => {
         return ({
             message: response.data.message,
@@ -88,10 +96,20 @@ const updateBilling = (billing_id,total_misc,previouse_balance,subsidized_by_sch
             return ({message:error.response.data.message,status:error.response.data.status})
   })
 }
-
+const getBillingByStudentId = (id) => {
+    return axiosInstance.get(API_URL + `billing/student/${id}`)
+    .then((response) => {
+        return ({
+            message: response.data.message,
+            status: response.data.status,
+            data: response.data.data
+        })
+    })
+}
 export default {
     getAllBilling,
     addBilling,
     addPayment,
-    updateBilling
+    updateBilling,
+    getBillingByStudentId
 }

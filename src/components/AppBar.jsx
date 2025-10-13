@@ -86,8 +86,7 @@ function ResponsiveAppBar() {
         {id:2, pageName: "Enrollment", link: "enrollment" },
         {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
-        {id:6, pageName: "Calendar", link: "calendar" },
-        {id:7, pageName: "Notification", link: "notification" }
+        {id:6, pageName: "Calendar", link: "calendar" }
       ];
       settings = ['Profile','Logout']
     }else if(user?.role === 'faculty'){

@@ -21,6 +21,7 @@ import GradesS from '../pages/student/GradesS'
 import NotificationS from '../pages/student/NotificationS';
 import SchoolCalendarPageS from '../pages/student/SchoolCalendarPage';
 import ScheduleS from '../pages/student/ScheduleS';
+import UserProfilePageS from '../pages/student/UserProfilePageS';
 
 import GradesF from '../pages/faculty/GradesF'
 import NotificationF from '../pages/faculty/NotificationF';
@@ -94,7 +95,7 @@ const DashboardLayout = () => {
                   <Route path="/grades" element={<GradesS />} />
                   <Route path="/notification" element={<NotificationS />} />
                   <Route path="/calendar" element={<SchoolCalendarPageS/>} />
-                  <Route path="/profile" element={<UserProfilePage />} />
+                  <Route path="/profile" element={<UserProfilePageS />} />
                 </>
               )}
               {user?.role === 'faculty' && (

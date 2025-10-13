@@ -32,7 +32,7 @@ import { getEnrollmentsBySemesterAndYear } from "../../actions/enrollment";
 import { useNavigate } from "react-router-dom";
 
 export default function Grades() {
-  const semesters = ["1st Semester", "2nd Semester"];
+  const semesters = ["1st Semester", "2nd Semester", "Summer"];
   const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
   const [filterSemester, setFilterSemester] = useState(semesters[0]);
   const [filterSchoolYear, setFilterSchoolYear] = useState(schoolYears[0]);

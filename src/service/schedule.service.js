@@ -11,7 +11,7 @@ const getAllSchedule = () => {
         })
     })
 }
-const addSchedule = (course, semester, schoolYear, subjectCode, descriptiveTitle, units, time, day, room, instructor) => {
+const addSchedule = (course, semester, schoolYear, subjectCode, descriptiveTitle, units, time, day, room, instructor,yearLevel,section) => {
     return axiosInstance.post(API_URL + `schedule`,{
       course,
       semester,
@@ -23,6 +23,8 @@ const addSchedule = (course, semester, schoolYear, subjectCode, descriptiveTitle
       day,
       room,
       instructor,
+      yearLevel,
+      section
     }).then((response) => {
         return ({
             message: response.data.message,
@@ -41,7 +43,7 @@ const addSchedule = (course, semester, schoolYear, subjectCode, descriptiveTitle
             return ({message:error.response.data.message,status:error.response.data.status})
   })
 }
-const updateSchedule = (id,course, semester, schoolYear, subjectCode, descriptiveTitle, units, time, day, room, instructor) => {
+const updateSchedule = (id,course, semester, schoolYear, subjectCode, descriptiveTitle, units, time, day, room, instructor,yearLevel,section) => {
     return axiosInstance.patch(API_URL + `schedule`,{
       id,
       course,
@@ -53,7 +55,8 @@ const updateSchedule = (id,course, semester, schoolYear, subjectCode, descriptiv
       time,
       day,
       room,
-      instructor
+      instructor,
+      yearLevel,section
     }).then((response) => {
         return ({
             message: response.data.message,

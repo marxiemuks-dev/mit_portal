@@ -1,8 +1,8 @@
 import billingService from "../service/billing.service";
-import { ADD_BILLING, ADD_PAYMENT, GET_ALL_BILLING, UPDATE_BILLING } from "./types"; // define your action types
+import { ADD_BILLING, ADD_PAYMENT, GET_ALL_BILLING, GET_ALL_STUDENT_BILL, UPDATE_BILLING } from "./types"; // define your action types
 
-export const addBilling = (student_id,total_misc,previouse_balance,subsidized_by_school,full_payment,semester,school_year) => (dispatch) => {
-  return billingService.addBilling(student_id,total_misc,previouse_balance,subsidized_by_school,full_payment,semester,school_year).then(
+export const addBilling = (studentID,semester,school_year,scholarship_status,total_unit,tuition_fee,total_misc,total_misc_other_fee,previouse_balance,subsidized_by_school,full_payment,total_bill) => (dispatch) => {
+  return billingService.addBilling(studentID,semester,school_year,scholarship_status,total_unit,tuition_fee,total_misc,total_misc_other_fee,previouse_balance,subsidized_by_school,full_payment,total_bill).then(
     (response) => {
       dispatch({
         type: ADD_BILLING,
@@ -42,8 +42,8 @@ export const addPayment = (billing_id, payment_date, amount_paid, reference_no) 
     }
   );
 };
-export const updateBilling = (billing_id,total_misc,previouse_balance,subsidized_by_school,full_payment,semester,school_year,current_bill) => (dispatch) => {
-  return billingService.updateBilling(billing_id,total_misc,previouse_balance,subsidized_by_school,full_payment,semester,school_year,current_bill).then(
+export const updateBilling = (billing_id,semester,school_year,scholarship_status,total_unit,tuition_fee,total_misc,total_misc_other_fee,previouse_balance,subsidized_by_school,full_payment,total_bill) => (dispatch) => {
+  return billingService.updateBilling(billing_id,semester,school_year,scholarship_status,total_unit,tuition_fee,total_misc,total_misc_other_fee,previouse_balance,subsidized_by_school,full_payment,total_bill).then(
     (response) => {
       dispatch({
         type: UPDATE_BILLING,
@@ -56,3 +56,15 @@ export const updateBilling = (billing_id,total_misc,previouse_balance,subsidized
     }
   );
 };
+export const getBillingByStudentId = (id) => (dispatch) => {
+    return billingService.getBillingByStudentId(id)
+    .then((response)=> {
+        dispatch({
+            type: GET_ALL_STUDENT_BILL,
+            payload: response.data
+        });
+        return response
+    },(error) => {
+        return error
+    })
+}

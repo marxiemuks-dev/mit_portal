@@ -29,10 +29,9 @@ import { useDispatch } from "react-redux";
 import { getAllSchedule } from "../../actions/schedule";
 import { addStudentGrades, getStudentGradesBySchedule, updateStudentGrade } from "../../actions/grade";
 import { getEnrollmentsBySemesterAndYear } from "../../actions/enrollment";
-import { useNavigate } from "react-router-dom";
 
 export default function Grades() {
-  const semesters = ["1st Semester", "2nd Semester","Summer"];
+  const semesters = ["1st Semester", "2nd Semester", "Summer"];
   const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
   const [filteredSubjects, setFilteredSubject] = useState([])
   const [selectedSubject, setSelectedSubject] = useState(filteredSubjects[0]); // ✅ fix: should be object or null
@@ -72,81 +71,63 @@ export default function Grades() {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState(null);
 
-
   const computeFinalGrade = (student) => {
     return ((student.premid + student.midterm + student.prefinal + student.finalterm) / 4).toFixed(2);
   };
-
   const handlePrint = () => {
-  const printContent = document.getElementById("print-area");
-
-  if (!printContent) {
-    alert("⚠️ No data to print. Make sure the table is rendered.");
+  if (!selectedSubject || enrolledStudent.length === 0) {
+    alert("⚠️ No data to print. Make sure a subject is selected and there are students.");
     return;
   }
 
-  const newWin = window.open("", "", "width=900,height=650");
-  newWin.document.write(`
-    <html>
-      <head>
-        <title>Grade Report</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-          }
-          h2, p {
-            text-align: center;
-            margin: 0;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-          }
-          th, td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: center;
-          }
-          th {
-            background-color: #f5f5f5;
-          }
-        </style>
-      </head>
-      <body>
-        ${printContent.innerHTML}
-      </body>
-    </html>
-  `);
-  newWin.document.close();
-  newWin.focus();
-  newWin.print();
-  // newWin.close();
+  const doc = new jsPDF('p', 'pt', 'a4'); // Portrait, points, A4 size
+  const title = `${selectedSubject.descriptiveTitle} (${selectedSubject.subjectCode})`;
+  const teacher = `Teacher: ${selectedSubject.instructor}`;
+  const semester = `Semester: ${selectedSubject.semester}`;
+  const schoolYear = `School Year: ${selectedSubject.schoolYear}`;
+
+  doc.setFontSize(16);
+  doc.text(title, 40, 40);
+  doc.setFontSize(12);
+  doc.text(teacher, 40, 60);
+  doc.text(semester, 40, 80);
+  doc.text(schoolYear, 40, 100);
+
+  // Prepare table data
+  const tableColumn = ["#", "Student No", "Student Name", "Pre-Mid", "Midterm", "Pre-Final", "Final-Term", "Average"];
+  const tableRows = [];
+
+  enrolledStudent.forEach((student, index) => {
+    const studentData = [
+      index + 1,
+      student.student_no,
+      student.student_name,
+      student.premid,
+      student.midterm,
+      student.prefinal,
+      student.finalterm,
+      computeFinalGrade(student),
+    ];
+    tableRows.push(studentData);
+  });
+
+  doc.autoTable({
+    head: [tableColumn],
+    body: tableRows,
+    startY: 120,
+    theme: 'grid',
+    headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0] },
+    styles: { fontSize: 10, cellPadding: 4 },
+  });
+
+  doc.save(`${selectedSubject.subjectCode}_Grades.pdf`);
 };
 
-    const navigate = useNavigate();
-    const [currentStudent, setCurrentStudent] = useState([]);
+
   useEffect(() => {
     // Filter schedules whenever semester, school year, or schedules list changes
-          const storedUser = localStorage.getItem("mitportal_user");
-          let parsedUser =[]
-            if (!storedUser) {
-              navigate("/signin");
-              return;
-            }
-      
-            try {
-            parsedUser = JSON.parse(storedUser);
-                          console.log(parsedUser)
-              setCurrentStudent(parsedUser)
-            } catch (err) {
-              console.error(err);
-              navigate("/signin");
-            }
-            console.log(schedules)
     const filtered = schedules.filter(
-      (s) => s.semester === filterSemester && s.schoolYear === filterSchoolYear && s.instructor === parsedUser.instructor_name
+      (s) => s.semester === filterSemester && s.schoolYear === filterSchoolYear
     );
 
     setFilteredSubject(filtered);
@@ -166,7 +147,6 @@ export default function Grades() {
       const result = await dispatch(addStudentGrades(0,0,0,0,studentSubjectData.studentId,studentSubjectData.subjectId))
       console.log(result)
       if(result.status === "error"){
-
         setLoadingAdd(false)
             setSnackbar({
             open: true,
@@ -174,10 +154,9 @@ export default function Grades() {
             severity: "error"
           });
       }
-                            const refresh = await dispatch(
-                        getStudentGradesBySchedule(selectedSubject.id)
-                      );
-                      setEnrolledStudent(refresh.data);
+      const refresh = await dispatch(getStudentGradesBySchedule(selectedSubject.id));
+      console.log(result.data)
+      setEnrolledStudent(refresh.data);
     } catch (error) {
       console.error("Failed to add student:", error);
     } finally {
@@ -185,7 +164,6 @@ export default function Grades() {
       setOpenAddDialog(false);
     }
   };
-
   useEffect(() => {
     const fetchEnrollments = async () => {
       try {
@@ -204,13 +182,8 @@ export default function Grades() {
       if (selectedSubject?.id) {
         try {
           const result = await dispatch(getStudentGradesBySchedule(selectedSubject.id));
-          console.log("✅ Grades fetched:", result);
           setEnrolledStudent(result.data)
-          // setSnackbar({
-          //   open: true,
-          //   message: result.response.data.message,
-          //   severity: "success"
-          // });
+          console.log(result)
         } catch (error) {
           console.error("❌ Failed to fetch student grades:", error);
           setSnackbar({
@@ -224,10 +197,17 @@ export default function Grades() {
 
     fetchStudent();
   }, [selectedSubject]);
-
+  
   useEffect(() => {
-      const fetchSchedule = async () => {
-        const result = await dispatch(getAllSchedule())
+    const fetchSchedule = async () => {
+      try {
+        const result = await dispatch(getAllSchedule());
+
+        if (!result || result.status === false) {
+          console.error("Failed to fetch schedules:", result?.message || "Unknown error");
+          return;
+        }
+
         const formattedSchedules = result.data.map((s) => ({
           id: s.schedule_id, // 👈 give DataGrid a proper id
           subjectCode: s.subject_code,
@@ -241,10 +221,16 @@ export default function Grades() {
           semester: s.semester,
           schoolYear: s.school_year,
         }));
+
         setSchedules(formattedSchedules);
+      } catch (error) {
+        console.error("Error fetching schedule:", error);
       }
-      fetchSchedule()
-  }, [loading]);
+    };
+
+    fetchSchedule();
+  }, [loading, dispatch]);
+
 
   return (
     <Box sx={{ p: 3, bgcolor: "#f4f6f8", minHeight: "100vh" }}>
@@ -358,16 +344,17 @@ export default function Grades() {
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Teacher: {selectedSubject.instructor}
             </Typography>
-            {/* <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
+            <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
               <Table>
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
                   <TableRow>
                     <TableCell>#</TableCell>
                     <TableCell>Student No</TableCell>
                     <TableCell>Student Name</TableCell>
-                    <TableCell>Prelim</TableCell>
+                    <TableCell>Pre-Mid</TableCell>
                     <TableCell>Midterm</TableCell>
-                    <TableCell>Final</TableCell>
+                    <TableCell>Pre-Final</TableCell>
+                    <TableCell>Final-Term</TableCell>
                     <TableCell>Average</TableCell>
                     <TableCell>Action</TableCell>
                   </TableRow>
@@ -383,9 +370,9 @@ export default function Grades() {
                           disabled
                           type="number"
                           size="small"
-                          value={student.prelim}
+                          value={student.premid}
                           onChange={(e) =>
-                            handleGradeChange(student.id, "prelim", e.target.value)
+                            handleGradeChange(student.id, "premid", e.target.value)
                           }
                           sx={{ width: 80 }}
                         />
@@ -407,9 +394,21 @@ export default function Grades() {
                           disabled
                           type="number"
                           size="small"
-                          value={student.final}
+                          value={student.prefinal}
                           onChange={(e) =>
-                            handleGradeChange(student.id, "final", e.target.value)
+                            handleGradeChange(student.id, "prefinal", e.target.value)
+                          }
+                          sx={{ width: 80 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          disabled
+                          type="number"
+                          size="small"
+                          value={student.finalterm}
+                          onChange={(e) =>
+                            handleGradeChange(student.id, "finalterm", e.target.value)
                           }
                           sx={{ width: 80 }}
                         />
@@ -431,183 +430,7 @@ export default function Grades() {
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer> */}
-                        <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
-                          <Table>
-                            <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-                              <TableRow>
-                                <TableCell>#</TableCell>
-                                <TableCell>Student No</TableCell>
-                                <TableCell>Student Name</TableCell>
-                                <TableCell>Pre-Mid</TableCell>
-                                <TableCell>Midterm</TableCell>
-                                <TableCell>Pre-Final</TableCell>
-                                <TableCell>Final-Term</TableCell>
-                                <TableCell>Average</TableCell>
-                                <TableCell>Action</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {enrolledStudent.map((student, index) => (
-                                <TableRow key={student.id}>
-                                  <TableCell>{index + 1}</TableCell>
-                                  <TableCell>{student.student_no}</TableCell>
-                                  <TableCell>{student.student_name}</TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.premid}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "premid", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.midterm}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "midterm", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.prefinal}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "prefinal", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.finalterm}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "finalterm", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>{computeFinalGrade(student)}</TableCell>
-                                  <TableCell>
-                                  <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={() => {
-                                      setSelectedGrade(student);
-                                      setOpenEditDialog(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </Button>
-                                </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-
-
-            {/* <Dialog
-              open={openEditDialog}
-              onClose={() => setOpenEditDialog(false)}
-              fullWidth
-              maxWidth="sm"
-            >
-              <DialogTitle>Edit Student Grade</DialogTitle>
-              <DialogContent>
-                {selectedGrade && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      {selectedGrade.student_name} ({selectedGrade.student_no})
-                    </Typography>
-                    <TextField
-                      margin="normal"
-                      label="Prelim"
-                      type="number"
-                      fullWidth
-                      value={selectedGrade.prelim || ""}
-                      onChange={(e) =>
-                        setSelectedGrade({ ...selectedGrade, prelim: e.target.value })
-                      }
-                    />
-                    <TextField
-                      margin="normal"
-                      label="Midterm"
-                      type="number"
-                      fullWidth
-                      value={selectedGrade.midterm || ""}
-                      onChange={(e) =>
-                        setSelectedGrade({ ...selectedGrade, midterm: e.target.value })
-                      }
-                    />
-                    <TextField
-                      margin="normal"
-                      label="Final"
-                      type="number"
-                      fullWidth
-                      value={selectedGrade.final || ""}
-                      onChange={(e) =>
-                        setSelectedGrade({ ...selectedGrade, final: e.target.value })
-                      }
-                    />
-                  </Box>
-                )}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
-                <Button
-                  variant="contained"
-                  onClick={async () => {
-                    try {
-                      const result = await dispatch(
-                        updateStudentGrade(
-                          selectedGrade.id,
-                          selectedGrade.prelim,
-                          selectedGrade.midterm,
-                          selectedGrade.final
-                        )
-                      );
-                      console.log(result)
-                      setSnackbar({
-                        open: true,
-                        message: "✅ Grade updated successfully!",
-                        severity: "success",
-                      });
-                      setOpenEditDialog(false);
-
-                      // Refresh table
-                      const refresh = await dispatch(
-                        getStudentGradesBySchedule(selectedSubject.id)
-                      );
-                      setEnrolledStudent(refresh.data);
-                    } catch (error) {
-                      console.error(error);
-                      setSnackbar({
-                        open: true,
-                        message: "❌ Failed to update grade",
-                        severity: "error",
-                      });
-                    }
-                  }}
-                >
-                  Save
-                </Button>
-              </DialogActions>
-            </Dialog> */}
+            </TableContainer>
             <Dialog
               open={openEditDialog}
               onClose={() => setOpenEditDialog(false)}
@@ -713,7 +536,6 @@ export default function Grades() {
                 </Button>
               </DialogActions>
             </Dialog>
-
             <Box
               mt={3}
               display="flex"

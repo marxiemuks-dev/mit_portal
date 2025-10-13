@@ -39,7 +39,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 // Replace with your actual action import (if available)
 import { getAllStudents } from "../../actions/student";
-import { addBilling, getAllBilling, updateBilling } from "../../actions/billing";
+import { addBilling, getAllBilling, getBillingByStudentId, updateBilling } from "../../actions/billing";
 import AddPaymentDialog from "../../components/AddPaymentDialog";
 
 // Mock fallback students (used if fetch fails)
@@ -69,6 +69,7 @@ const MOCK_STUDENTS = [
 ];
 const semesters = ["1st Semester", "2nd Semester", "Summer"];
 const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
+const scholarshipOptions = ['None', 'Academic Scholarship','Brother & Sister','HASSAN Scholarship','HALUN Scholarship','UNIFAST','TDP','AHME'];
 export default function BillingPage() {
   const dispatch = useDispatch();
   const [filterStudentNo, setFilterStudentNo] = useState("");
@@ -112,23 +113,15 @@ export default function BillingPage() {
     student: null, // student object
     semester: semesters[0],
     schoolYear: schoolYears[0],
-    totalMisc: "",
+    scholarshipStatus: scholarshipOptions[0],
+    totalUnit: "",
+    tuitionFee: "",
+    totalMisc: 9500,
+    totalMiscOtherFee: "",
     prevBalance: "",
     subsidized: "",
     fullPayment: "",
-    // optional detailed breakdown for "View Breakdown"
-    breakdown: {
-      registration: "",
-      identification: "",
-      library: "",
-      dentalMedical: "",
-      athletic: "",
-      orgSSC: "",
-      developmentalFee: "",
-      immersion: "",
-      affiliationFee: "",
-      enhancementFee: "",
-    },
+    totalBill: ""
   };
   const [formData, setFormData] = useState(initialForm);
   const [editFormData, setEditFormData] = useState(initialForm);
@@ -136,7 +129,6 @@ export default function BillingPage() {
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
   // snackbar
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-
   // fetch students from backend (if action exists)
   useEffect(() => {
     let mounted = true;
@@ -178,29 +170,56 @@ export default function BillingPage() {
       try {
         const result = await dispatch(getAllBilling());
         if (result.status === true) {
-          const formattedBillingData = result.data.map((item) => ({
-            billing_id: item.billing_id,
-            student_id: item.student_id,
-            studentID: item.studentID,
-            totalMisc: item.total_misc,
-            prevBalance: item.previouse_balance,
-            subsidized: item.subsidized_by_school,
-            total_bill: item.total_bill,
-            fullPayment: item.full_payment,
-            created_at: item.created_at,
-            course: item.course || "N/A",
-            yearLevel: item.year_level || "N/A",
-            semester: item.semester,
-            schoolYear: item.school_year,
-            fullName: item.students
-              ? `${item.students.first_name} ${item.students.middle_name || ""} ${item.students.last_name}`.trim()
-              : "N/A",
-            student_no: item.students?.student_no || "N/A",
-            student_uuid: item.students?.id || null,
-            students: item.students || {},
-            payments: item.payments || [],
-            current_bill: item.current_bill,
-          }));
+const formattedBillingData = result.data.map((item) => ({
+  billing_id: item.billing_id,
+  student_id: item.student_id,
+  studentID: item.studentID,
+  totalMisc: item.total_misc ?? 0,
+  totalMiscOtherFee: item.total_misc_other_fee ?? 0,
+  prevBalance: item.previouse_balance ?? 0,
+  subsidized: item.subsidized_by_school ?? 0,
+  totalBill: item.total_bill ?? 0,
+  fullPayment: item.full_payment ?? 0,
+  totalPayment: item.total_payment ?? 0,
+  current_bill: item.current_bill ?? 0,
+  totalUnit: item.total_unit ?? 0,
+  tuitionFee: item.tuition_fee ?? 0,
+  scholarshipStatus: item.scholarship_status || "None",
+  created_at: item.created_at,
+  semester: item.semester || "N/A",
+  schoolYear: item.school_year || "N/A",
+
+  // 🧩 Student Information
+  course:
+    item.course ||
+    item.students?.course ||
+    item.studentEnrollment?.current_course ||
+    "N/A",
+  yearLevel:
+    item.year_level ||
+    item.studentEnrollment?.current_year_level ||
+    "N/A",
+  student_no:
+    item.student_no ||
+    item.students?.student_no ||
+    item.studentEnrollment?.students?.student_no ||
+    "N/A",
+  student_uuid:
+    item.students?.id ||
+    item.studentEnrollment?.students?.id ||
+    null,
+  fullName:
+    item.students
+      ? `${item.students.first_name} ${item.students.middle_name || ""} ${item.students.last_name}`.trim()
+      : item.studentEnrollment?.students
+      ? `${item.studentEnrollment.students.first_name} ${item.studentEnrollment.students.middle_name || ""} ${item.studentEnrollment.students.last_name}`.trim()
+      : "N/A",
+
+  // 🧾 Payments and Nested Data
+  students: item.students || item.studentEnrollment?.students || {},
+  payments: item.payments || item.payment || [],
+}));
+
           // 🧠 Sort alphabetically by last name, then by first name
           const sortedBillingData = formattedBillingData.sort((a, b) => {
             const lastA = a.students?.last_name?.toLowerCase() || "";
@@ -235,44 +254,245 @@ export default function BillingPage() {
 
   const openEditDialog = (record) => {
     setEditFormData({
-      student: record.students,
+      student: record.students || null, // full student object
       semester: record.semester || semesters[0],
-      schoolYear: record.schoolYear || schoolYears[0],
-      totalMisc: record.totalMisc ?? "",
-      prevBalance: record.prevBalance ?? "",
-      subsidized: record.subsidized ?? "",
-      fullPayment: record.fullPayment ?? "",
-      breakdown: record.breakdown || initialForm.breakdown,
-      billingID: record.billing_id,
-      currentBill: record.current_bill
+      schoolYear: record.schoolYear || record.school_year || schoolYears[0],
+      scholarshipStatus: record.scholarshipStatus || record.scholarship_status || scholarshipOptions[0],
+
+      totalUnit: record.totalUnit ?? record.total_unit ?? "",
+      tuitionFee: record.tuitionFee ?? record.tuition_fee ?? "",
+      totalMisc: record.totalMisc ?? record.total_misc ?? 9500,
+      totalMiscOtherFee: record.totalMiscOtherFee ?? record.total_misc_other_fee ?? "",
+      prevBalance: record.prevBalance ?? record.previouse_balance ?? "",
+      subsidized: record.subsidized ?? record.subsidized_by_school ?? "",
+      fullPayment: record.fullPayment ?? record.full_payment ?? "",
+      totalBill: record.totalBill ?? record.total_bill ?? "",
+
+      billingID: record.billing_id ?? "",
+      currentBill: record.current_bill ?? "",
     });
+
     setEditingRecord(record);
     setOpenDialog(true);
   };
-  const handleFormChange = (field, value) => {
-    if(field === 'totalMisc'){
-      setFormData((prev) => ({ ...prev, ['fullPayment']: calculateSubsidized(value).total.toFixed(2)}));
-      setFormData((prev) => ({ ...prev, ['subsidized']: calculateSubsidized(value).discountAmount.toFixed(2)}));
+
+  const handleFormChange = async (field, value) => {
+    // Helper: calculate discount and update form fields
+    const applyScholarshipDiscount = (prev) => {
+      let tuitionFee = parseFloat(prev.tuitionFee) || 0;
+      let totalMisc = parseFloat(prev.totalMisc) || 0;
+      let prevBalance = parseFloat(prev.prevBalance) || 0;
+      let discountAmount = 0;
+      let fullPayment = 0;
+      let totalBill = 0;
+
+      switch (prev.scholarshipStatus) {
+        case "Academic Scholarship":
+          // 30% off tuition
+          discountAmount = tuitionFee * 0.3;
+          fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+          totalBill = fullPayment;
+          break;
+
+        case "Brother & Sister":
+          // you can adjust this dynamically (2, 3, or 4 siblings)
+          // for now we’ll assume user provides siblingCount somewhere
+          const siblings = parseInt(prev.siblingCount || 1);
+          if (siblings === 2) discountAmount = tuitionFee * 0.25;
+          else if (siblings === 3) discountAmount = tuitionFee * 0.5;
+          else if (siblings >= 4) discountAmount = tuitionFee; // 100%
+          fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+          totalBill = fullPayment;
+          break;
+
+        case "HASSAN Scholarship":
+        case "HALUN Scholarship":
+          // Fully covered by school
+          discountAmount = tuitionFee + totalMisc;
+          fullPayment = 0;
+          totalBill = 0;
+          break;
+
+        case "UNIFAST":
+          // ₱10,000 discount
+          discountAmount = 10000;
+          fullPayment = Math.max(tuitionFee + totalMisc + prevBalance - 10000, 0);
+          totalBill = fullPayment;
+          break;
+
+        case "TDP":
+          // ₱7,500 discount
+          discountAmount = 7500;
+          fullPayment = Math.max(tuitionFee + totalMisc + prevBalance - 7500, 0);
+          totalBill = fullPayment;
+          break;
+
+        case "None":
+        default:
+          // 30% off tuition (default)
+          discountAmount = tuitionFee * 0.3;
+          fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+          totalBill = fullPayment;
+          break;
+      }
+
+      return {
+        ...prev,
+        subsidized: discountAmount.toFixed(2),
+        fullPayment: fullPayment.toFixed(2),
+        totalBill: totalBill.toFixed(2),
+      };
+    };
+
+    // 👇 field handling logic
+    if (field === "student") {
+      setFormData((prev) => ({ ...prev, scholarshipStatus: value.scholarship_status }));
+      try {
+        const result = await dispatch(getBillingByStudentId(value.id));
+        if (result.status === true) {
+          setFormData((prev) => ({ ...prev, prevBalance: result.data?.totalCurrentBill?.toFixed(2) || 0 }));
+          console.log(result)
+        } else {
+          setFormData((prev) => ({ ...prev, prevBalance: 0 }));
+        }
+      } catch {
+        setFormData((prev) => ({ ...prev, prevBalance: 0 }));
+      }
     }
-    if(field === 'subsidized'){
-      setFormData((prev) => ({ ...prev, ['fullPayment']: calculateDiscount(formData.totalMisc, value).toFixed(2)}));
-      setFormData((prev) => ({ ...prev, ['subsidized']:value}));
+
+    if (field === "totalUnit") {
+      setFormData((prev) => {
+        const tuitionFee = value * 400;
+        const totalMiscOtherFee = 9500 + tuitionFee;
+        const updated = { ...prev, totalUnit: value, tuitionFee, totalMiscOtherFee };
+        return applyScholarshipDiscount(updated);
+      });
+      return;
     }
-    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (field === "scholarshipStatus") {
+      setFormData((prev) => {
+        const updated = { ...prev, scholarshipStatus: value };
+        return applyScholarshipDiscount(updated);
+      });
+      return;
+    }
+
+    // Default update
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      return applyScholarshipDiscount(updated);
+    });
   };
 
-  const handleFormChangeEdit = (field, value) => {
-    if(field === 'totalMisc'){
-      setEditFormData((prev) => ({ ...prev, ['fullPayment']: calculateSubsidized(value).total.toFixed(2)}));
-      setEditFormData((prev) => ({ ...prev, ['subsidized']: calculateSubsidized(value).discountAmount.toFixed(2)}));
+const handleFormChangeEdit = async(field, value) => {
+      // Helper: calculate discount and update form fields
+  const applyScholarshipDiscount = (prev) => {
+    let tuitionFee = parseFloat(prev.tuitionFee) || 0;
+    let totalMisc = parseFloat(prev.totalMisc) || 0;
+    let prevBalance = parseFloat(prev.prevBalance) || 0;
+    let discountAmount = 0;
+    let fullPayment = 0;
+    let totalBill = 0;
+
+    switch (prev.scholarshipStatus) {
+      case "Academic Scholarship":
+        // 30% off tuition
+        discountAmount = tuitionFee * 0.3;
+        fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+        totalBill = fullPayment;
+        break;
+
+      case "Brother & Sister":
+        // you can adjust this dynamically (2, 3, or 4 siblings)
+        // for now we’ll assume user provides siblingCount somewhere
+        const siblings = parseInt(prev.siblingCount || 1);
+        if (siblings === 2) discountAmount = tuitionFee * 0.25;
+        else if (siblings === 3) discountAmount = tuitionFee * 0.5;
+        else if (siblings >= 4) discountAmount = tuitionFee; // 100%
+        fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+        totalBill = fullPayment;
+        break;
+
+      case "HASSAN Scholarship":
+      case "HALUN Scholarship":
+        // Fully covered by school
+        discountAmount = tuitionFee + totalMisc;
+        fullPayment = 0;
+        totalBill = 0;
+        break;
+
+      case "UNIFAST":
+        // ₱10,000 discount
+        discountAmount = 10000;
+        fullPayment = Math.max(tuitionFee + totalMisc + prevBalance - 10000, 0);
+        totalBill = fullPayment;
+        break;
+
+      case "TDP":
+        // ₱7,500 discount
+        discountAmount = 7500;
+        fullPayment = Math.max(tuitionFee + totalMisc + prevBalance - 7500, 0);
+        totalBill = fullPayment;
+        break;
+
+      case "None":
+      default:
+        // 30% off tuition (default)
+        discountAmount = tuitionFee * 0.3;
+        fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+        totalBill = fullPayment;
+        break;
     }
-    if(field === 'subsidized'){
-      setEditFormData((prev) => ({ ...prev, ['fullPayment']: calculateDiscount(formData.totalMisc, value).toFixed(2)}));
-      setEditFormData((prev) => ({ ...prev, ['subsidized']:value}));
-    }
-    setEditFormData((prev) => ({ ...prev, [field]: value }));
+
+    return {
+      ...prev,
+      subsidized: discountAmount.toFixed(2),
+      fullPayment: fullPayment.toFixed(2),
+      totalBill: totalBill.toFixed(2),
+    };
   };
 
+  // 👇 field handling logic
+  if (field === "student") {
+    setEditFormData((prev) => ({ ...prev, scholarshipStatus: value.scholarship_status }));
+    try {
+      const result = await dispatch(getBillingByStudentId(value.id));
+      if (result.status === true) {
+        setEditFormData((prev) => ({ ...prev, prevBalance: result.data?.totalCurrentBill?.toFixed(2) || 0 }));
+        console.log(result)
+      } else {
+        setEditFormData((prev) => ({ ...prev, prevBalance: 0 }));
+      }
+    } catch {
+      setEditFormData((prev) => ({ ...prev, prevBalance: 0 }));
+    }
+  }
+
+  if (field === "totalUnit") {
+    setEditFormData((prev) => {
+      const tuitionFee = value * 400;
+      const totalMiscOtherFee = 9500 + tuitionFee;
+      const updated = { ...prev, totalUnit: value, tuitionFee, totalMiscOtherFee };
+      return applyScholarshipDiscount(updated);
+    });
+    return;
+  }
+
+  if (field === "scholarshipStatus") {
+    setEditFormData((prev) => {
+      const updated = { ...prev, scholarshipStatus: value };
+      return applyScholarshipDiscount(updated);
+    });
+    return;
+  }
+
+  // Default update
+  setEditFormData((prev) => {
+    const updated = { ...prev, [field]: value };
+    return applyScholarshipDiscount(updated);
+  });
+  };
   function calculateDiscount(bill, discountAmount) {
     const total = bill - discountAmount;
     return total;
@@ -283,7 +503,6 @@ export default function BillingPage() {
     const total = totalMisc - discountAmount;
     return {total,discountAmount};
   }
-
   // Save (add or update)
   const handleSaveEdit = async () => {
     // basic validation
@@ -297,7 +516,20 @@ export default function BillingPage() {
     }
     setFormLoading(true);
     try {
-      const result = await dispatch(updateBilling(editFormData.billingID,editFormData.totalMisc,editFormData.prevBalance,editFormData.subsidized,editFormData.fullPayment,editFormData.semester,editFormData.schoolYear,editFormData.currentBill))
+      const result = await dispatch(updateBilling(
+        editFormData.billingID,
+          editFormData.semester,
+          editFormData.schoolYear,
+          editFormData.scholarshipStatus,
+          editFormData.totalUnit,
+          editFormData.tuitionFee,
+          editFormData.totalMisc,
+          editFormData.totalMiscOtherFee,
+          editFormData.prevBalance,
+          editFormData.subsidized,
+          editFormData.fullPayment,
+          editFormData.totalBill
+      ))
         if(result.status === true){
           setSnackbar({ open: true, message: "Billing added", severity: "success" });
           setOpenDialog(false);
@@ -368,7 +600,7 @@ export default function BillingPage() {
       setSnackbar({ open: true, message: "Select a student", severity: "warning" });
       return;
     }
-    if (!formData.totalMisc || !formData.subsidized || !formData.fullPayment) {
+    if (!formData.totalUnit || !formData.totalMiscOtherFee || !formData.fullPayment) {
       setSnackbar({ open: true, message: "Fill all the billing information", severity: "warning" });
       return;
     }
@@ -386,19 +618,26 @@ export default function BillingPage() {
         prevBalance: Number(formData.prevBalance || 0),
         subsidized: Number(formData.subsidized || 0),
         fullPayment: Number(formData.fullPayment || 0),
-        breakdown: formData.breakdown,
       };
       if (editingRecord) {
-        // update existing
+        // update existings
         setBillingRecords((prev) => prev.map((r) => (r.id === editingRecord.id ? { ...r, ...payload } : r)));
         setSnackbar({ open: true, message: "Billing updated", severity: "success" });
       } else {
-        // add new
-        const newRec = {
-          id: billingRecords.length ? Math.max(...billingRecords.map((r) => r.id)) + 1 : 1,
-          ...payload,
-        };
-        const result = await dispatch(addBilling(payload.studentId,payload.totalMisc,payload.prevBalance,payload.subsidized,payload.fullPayment,payload.semester,payload.schoolYear))
+        const result = await dispatch(addBilling(
+          formData.student.id,
+          formData.semester,
+          formData.schoolYear,
+          formData.scholarshipStatus,
+          formData.totalUnit,
+          formData.tuitionFee,
+          formData.totalMisc,
+          formData.totalMiscOtherFee,
+          formData.prevBalance,
+          formData.subsidized,
+          formData.fullPayment,
+          formData.totalBill
+        ))
         console.log(result)
         if(result.status === true){
           setSnackbar({ open: true, message: "Billing added", severity: "success" });
@@ -409,26 +648,52 @@ export default function BillingPage() {
             billing_id: item.billing_id,
             student_id: item.student_id,
             studentID: item.studentID,
-            totalMisc: item.total_misc,
-            prevBalance: item.previouse_balance,
-            subsidized: item.subsidized_by_school,
-            total_bill: item.total_bill,
-            fullPayment: item.full_payment,
+            totalMisc: item.total_misc ?? 0,
+            totalMiscOtherFee: item.total_misc_other_fee ?? 0,
+            prevBalance: item.previouse_balance ?? 0,
+            subsidized: item.subsidized_by_school ?? 0,
+            totalBill: item.total_bill ?? 0,
+            fullPayment: item.full_payment ?? 0,
+            totalPayment: item.total_payment ?? 0,
+            current_bill: item.current_bill ?? 0,
+            totalUnit: item.total_unit ?? 0,
+            tuitionFee: item.tuition_fee ?? 0,
+            scholarshipStatus: item.scholarship_status || "None",
             created_at: item.created_at,
-            course: item.course || "N/A",
-            yearLevel: item.year_level || "N/A",
-            semester: item.semester,
-            schoolYear: item.school_year,
-            last_name: item.students.last_name,
-            fullName: item.students
-              ? `${item.students.first_name} ${item.students.middle_name || ""} ${item.students.last_name}`.trim()
-              : "N/A",
-            student_no: item.students?.student_no || "N/A",
-            student_uuid: item.students?.id || null,
-            students: item.students || {},
-            payments: item.payments || [],
-            current_bill: item.current_bill
+            semester: item.semester || "N/A",
+            schoolYear: item.school_year || "N/A",
+
+            // 🧩 Student Information
+            course:
+              item.course ||
+              item.students?.course ||
+              item.studentEnrollment?.current_course ||
+              "N/A",
+            yearLevel:
+              item.year_level ||
+              item.studentEnrollment?.current_year_level ||
+              "N/A",
+            student_no:
+              item.student_no ||
+              item.students?.student_no ||
+              item.studentEnrollment?.students?.student_no ||
+              "N/A",
+            student_uuid:
+              item.students?.id ||
+              item.studentEnrollment?.students?.id ||
+              null,
+            fullName:
+              item.students
+                ? `${item.students.first_name} ${item.students.middle_name || ""} ${item.students.last_name}`.trim()
+                : item.studentEnrollment?.students
+                ? `${item.studentEnrollment.students.first_name} ${item.studentEnrollment.students.middle_name || ""} ${item.studentEnrollment.students.last_name}`.trim()
+                : "N/A",
+
+            // 🧾 Payments and Nested Data
+            students: item.students || item.studentEnrollment?.students || {},
+            payments: item.payments || item.payment || [],
           }));
+
           
           const sortedBillingData = formattedBillingData.sort((a, b) => {
             const lastA = a.students?.last_name?.toLowerCase() || "";
@@ -465,7 +730,6 @@ const filteredBilling = billingRecords.filter((billing) => {
       schoolYear === filterSchoolYear.toLowerCase())
   );
 });
-
 
   return (
     <Box sx={{ p: 3, bgcolor: "#f4f6f8", minHeight: "100vh" }}>
@@ -510,7 +774,6 @@ const filteredBilling = billingRecords.filter((billing) => {
               <TextField {...params} label="Select Student" size="small" fullWidth />
             )}
           />
-
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Semester</InputLabel>
             <Select
@@ -579,32 +842,183 @@ const filteredBilling = billingRecords.filter((billing) => {
           Billing Information
         </Typography>
         <Divider sx={{ mb: 3 }} />
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 4 }}>
-          <TextField
-            label="Total Misc. & Other Fees"
-            type="number"
-            size="small"
-            sx={{ flex: 1, minWidth: 220 }}
-            value={formData.totalMisc}
-            onChange={(e) => handleFormChange("totalMisc", e.target.value)}
-          />
-          <TextField
-            label="Subsidized by School"
-            type="number"
-            size="small"
-            sx={{ flex: 1, minWidth: 220 }}
-            value={formData.subsidized}
-            onChange={(e) => handleFormChange("subsidized", e.target.value)}
-          />
-          <TextField
-            label="Full Payment"
-            type="number"
-            size="small"
-            sx={{ flex: 1, minWidth: 220 }}
-            value={formData.fullPayment}
-            onChange={(e) => handleFormChange("fullPayment", e.target.value)}
-          />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+            mb: 4,
+          }}
+        >
+          {/* Row 1: Scholarship Status + Total Unit + Tuition Fee */}
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 220, flex: 1 }}>
+              <InputLabel>Scholarship Status</InputLabel>
+              <Select
+                label="Scholarship Status"
+                value={formData.scholarshipStatus}
+                onChange={(e) => handleFormChange("scholarshipStatus", e.target.value)}
+              >
+                {scholarshipOptions.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Total Unit"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 180 }}
+              value={formData.totalUnit}
+              onChange={(e) => handleFormChange("totalUnit", e.target.value)}
+            />
+
+            <TextField
+              label="Tuition Fee"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={formData.tuitionFee}
+              disabled
+              onChange={(e) => handleFormChange("tuitionFee", e.target.value)}
+            />
+          </Box>
+          {/* Row 2: Misc Fee + Prev Balance + Subsidized */}
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <Card variant="outlined" sx={{ p: 2, borderRadius: 2, minWidth:1000 }}>
+              <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+                Miscellaneous Fees Breakdown
+              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+                  gap: 1.5,
+                }}
+              >
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Registration</Typography>
+                  <Typography fontWeight="bold">₱ 2,000.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Identification (ID)</Typography>
+                  <Typography fontWeight="bold">₱ 300.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Library</Typography>
+                  <Typography fontWeight="bold">₱ 1,000.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Dental / Medical</Typography>
+                  <Typography fontWeight="bold">₱ 750.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Athletic / PRISAA</Typography>
+                  <Typography fontWeight="bold">₱ 750.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>School Org / SSC</Typography>
+                  <Typography fontWeight="bold">₱ 200.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Other Matriculation</Typography>
+                  <Typography fontWeight="bold">₱ 1,500.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Development Fee</Typography>
+                  <Typography fontWeight="bold">₱ 1,000.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Immersion</Typography>
+                  <Typography fontWeight="bold">₱ 0.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Affiliation Fee</Typography>
+                  <Typography fontWeight="bold">₱ 500.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Enhancement Fee</Typography>
+                  <Typography fontWeight="bold">₱ 1,500.00</Typography>
+                </Box>
+              </Box>
+
+              {/* Optional total row */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mt: 2,
+                  borderTop: "1px solid #ddd",
+                  pt: 1,
+                }}
+              >
+                <Typography variant="subtitle2">Total Miscellaneous Fees</Typography>
+                <Typography variant="subtitle2" fontWeight="bold">
+                  ₱ 9,500.00
+                </Typography>
+              </Box>
+            </Card>
+            <TextField
+              label="Total Misc. & Other Fees"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 250 }}
+              value={formData.totalMiscOtherFee}
+              onChange={(e) => handleFormChange("totalMiscOtherFee", e.target.value)}
+            />
+          </Box>
+          {/* Row 3: Full Payment */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              label="Previous Balance"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={formData.prevBalance}
+              onChange={(e) => handleFormChange("prevBalance", e.target.value)}
+            />
+            <TextField
+              label="Subsidized by School"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={formData.subsidized}
+              onChange={(e) => handleFormChange("subsidized", e.target.value)}
+            />
+          </Box>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              label="Full Payment"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={formData.fullPayment}
+              onChange={(e) => handleFormChange("fullPayment", e.target.value)}
+            />
+            <TextField
+              label="Total Bill"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={formData.totalBill}
+              onChange={(e) => handleFormChange("totalBill", e.target.value)}
+            />
+          </Box>
         </Box>
+        
+
         {/* Add Billing Button */}
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
           <Button
@@ -821,39 +1235,185 @@ const filteredBilling = billingRecords.filter((billing) => {
                 </Box>
               </>
             )}
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+          Billing Information
+        </Typography>
+        <Divider sx={{ mb: 3 }} />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+            mb: 4,
+          }}
+        >
+          {/* Row 1: Scholarship Status + Total Unit + Tuition Fee */}
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 220, flex: 1 }}>
+              <InputLabel>Scholarship Status</InputLabel>
+              <Select
+                label="Scholarship Status"
+                value={editFormData.scholarshipStatus}
+                onChange={(e) => handleFormChangeEdit("scholarshipStatus", e.target.value)}
+              >
+                {scholarshipOptions.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Total Unit"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 180 }}
+              value={editFormData.totalUnit}
+              onChange={(e) => handleFormChangeEdit("totalUnit", e.target.value)}
+            />
 
-            {/* Billing Information */}
-            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-              Billing Information
-            </Typography>
-            <Divider sx={{ mb: 3 }} />
+            <TextField
+              label="Tuition Fee"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={editFormData.tuitionFee}
+              disabled
+              onChange={(e) => handleFormChangeEdit("tuitionFee", e.target.value)}
+            />
+          </Box>
+          {/* Row 2: Misc Fee + Prev Balance + Subsidized */}
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <Card variant="outlined" sx={{ p: 2, borderRadius: 2, minWidth:1000 }}>
+              <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+                Miscellaneous Fees Breakdown
+              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+                  gap: 1.5,
+                }}
+              >
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Registration</Typography>
+                  <Typography fontWeight="bold">₱ 2,000.00</Typography>
+                </Box>
 
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 4 }}>
-              <TextField
-                label="Total Misc. & Other Fees"
-                type="number"
-                size="small"
-                sx={{ flex: 1, minWidth: 220 }}
-                value={editFormData.totalMisc}
-                onChange={(e) => handleFormChangeEdit("totalMisc", e.target.value)}
-              />
-              <TextField
-                label="Subsidized by School"
-                type="number"
-                size="small"
-                sx={{ flex: 1, minWidth: 220 }}
-                value={editFormData.subsidized}
-                onChange={(e) => handleFormChangeEdit("subsidized", e.target.value)}
-              />
-              <TextField
-                label="Full Payment"
-                type="number"
-                size="small"
-                sx={{ flex: 1, minWidth: 220 }}
-                value={editFormData.fullPayment}
-                onChange={(e) => handleFormChangeEdit("fullPayment", e.target.value)}
-              />
-            </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Identification (ID)</Typography>
+                  <Typography fontWeight="bold">₱ 300.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Library</Typography>
+                  <Typography fontWeight="bold">₱ 1,000.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Dental / Medical</Typography>
+                  <Typography fontWeight="bold">₱ 750.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Athletic / PRISAA</Typography>
+                  <Typography fontWeight="bold">₱ 750.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>School Org / SSC</Typography>
+                  <Typography fontWeight="bold">₱ 200.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Other Matriculation</Typography>
+                  <Typography fontWeight="bold">₱ 1,500.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Development Fee</Typography>
+                  <Typography fontWeight="bold">₱ 1,000.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Immersion</Typography>
+                  <Typography fontWeight="bold">₱ 0.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Affiliation Fee</Typography>
+                  <Typography fontWeight="bold">₱ 500.00</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography>Enhancement Fee</Typography>
+                  <Typography fontWeight="bold">₱ 1,500.00</Typography>
+                </Box>
+              </Box>
+
+              {/* Optional total row */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mt: 2,
+                  borderTop: "1px solid #ddd",
+                  pt: 1,
+                }}
+              >
+                <Typography variant="subtitle2">Total Miscellaneous Fees</Typography>
+                <Typography variant="subtitle2" fontWeight="bold">
+                  ₱ 9,500.00
+                </Typography>
+              </Box>
+            </Card>
+            <TextField
+              label="Total Misc. & Other Fees"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 250 }}
+              value={editFormData.totalMiscOtherFee}
+              onChange={(e) => handleFormChangeEdit("totalMiscOtherFee", e.target.value)}
+            />
+          </Box>
+          {/* Row 3: Full Payment */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              label="Previous Balance"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={editFormData.prevBalance}
+              onChange={(e) => handleFormChangeEdit("prevBalance", e.target.value)}
+            />
+            <TextField
+              label="Subsidized by School"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={editFormData.subsidized}
+              onChange={(e) => handleFormChangeEdit("subsidized", e.target.value)}
+            />
+          </Box>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              label="Full Payment"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={editFormData.fullPayment}
+              onChange={(e) => handleFormChangeEdit("fullPayment", e.target.value)}
+            />
+            <TextField
+              label="Total Bill"
+              type="number"
+              size="small"
+              sx={{ flex: 1, minWidth: 220 }}
+              value={editFormData.totalBill}
+              onChange={(e) => handleFormChangeEdit("totalBill", e.target.value)}
+            />
+          </Box>
+        </Box>
 
             {/* Save Button */}
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
