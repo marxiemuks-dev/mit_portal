@@ -67,8 +67,8 @@ export default function SchedulePage() {
   const [filterSemester, setFilterSemester] = useState(semesters[0]);
   const [filterSchoolYear, setFilterSchoolYear] = useState(schoolYears[0]);
   const [facultyList, setFacultyList] = useState([]); // 👈 instructors list
-      const navigate = useNavigate();
-      const [currentStudent, setCurrentStudent] = useState([]);
+  const navigate = useNavigate();
+  const [currentStudent, setCurrentStudent] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
     course: courses[0],
     semester: semesters[0],
@@ -135,16 +135,49 @@ export default function SchedulePage() {
   }, [newSchedule, loading, dispatch]);
 
   
+  // useEffect(() => {
+  //   const fetchFaculty = async () => {
+  //     try {
+  //       const res = await axiosInstance.get("http://127.0.0.1:5000/api/auth/faculty");
+  //       if (res.data.status === "success") {
+  //         const formatted = res.data.data.map((f) => ({
+  //           label: `${f.first_name} ${f.middle_name ? f.middle_name + " " : ""}${f.last_name}`,
+  //           value: f.id,
+  //         }));
+  //         setFacultyList(formatted);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching faculty:", error);
+  //     }
+  //   };
+  //   fetchFaculty();
+  // }, []);
   useEffect(() => {
     const fetchFaculty = async () => {
       try {
         const res = await axiosInstance.get("http://127.0.0.1:5000/api/auth/faculty");
         if (res.data.status === "success") {
+          // Format all faculty
           const formatted = res.data.data.map((f) => ({
             label: `${f.first_name} ${f.middle_name ? f.middle_name + " " : ""}${f.last_name}`,
             value: f.id,
           }));
-          setFacultyList(formatted);
+
+          // ✅ Get stored user from localStorage
+          const storedUser = localStorage.getItem("mitportal_user");
+          if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+
+            // ✅ Filter to only include the logged-in instructor
+            const filtered = formatted.filter(
+              (f) => f.label === parsedUser.instructor_name
+            );
+
+            setFacultyList(filtered);
+          } else {
+            // fallback — set full list if no user found
+            setFacultyList(formatted);
+          }
         }
       } catch (error) {
         console.error("Error fetching faculty:", error);
@@ -152,6 +185,7 @@ export default function SchedulePage() {
     };
     fetchFaculty();
   }, []);
+
 
   const handleOpenDialog = (schedule = null) => {
 
@@ -638,6 +672,39 @@ const handlePrint = () => {
               )}
             />
           </Box>
+          {/* <Box>
+            <Typography variant="h6" gutterBottom>
+              Instructor
+            </Typography>
+            <Autocomplete
+              options={facultyList}
+              value={
+                facultyList.find(
+                  (f) => f.label === currentStudent.instructor_name
+                ) || null
+              }
+              onChange={(e, newValue) =>
+                setNewSchedule({
+                  ...newSchedule,
+                  instructor: newValue ? newValue.value : "",
+                })
+              }
+              getOptionLabel={(option) => option.label || ""}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Instructor"
+                  fullWidth
+                  value={currentStudent.instructor_name || ""}
+                  InputProps={{
+                    ...params.InputProps,
+                    readOnly: true, // 👈 make it read-only
+                  }}
+                />
+              )}
+            />
+          </Box> */}
+
         </DialogContent>
 
         <DialogActions>

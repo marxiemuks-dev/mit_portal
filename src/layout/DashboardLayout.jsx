@@ -7,7 +7,8 @@ import { Box } from '@mui/material'
 import Enrollment from '../pages/admin/Enrollment';
 import Schedule from '../pages/admin/Schedule';
 import Grades from '../pages/admin/Grades';
-import Billing from '../pages/admin/Billing';
+// import Billing from '../pages/admin/Billing';
+import Billing from '../pages/admin/Billing-Copy';
 import NotificationsPage from '../pages/admin/Notification';
 import Enroll from '../pages/admin/Enroll';
 import EnrolledList from '../pages/admin/EnrolledList';
@@ -16,6 +17,7 @@ import SchoolCalendar from '../pages/admin/SchoolCalendarPage';
 import UserProfilePage from '../pages/admin/UserProfilePage';
 
 import DashboardS from '../pages/student/DashboardS';
+import BillingS from '../pages/student/Billing';
 import EnrollmentS from '../pages/student/EnrollmentS';
 import GradesS from '../pages/student/GradesS'
 import NotificationS from '../pages/student/NotificationS';
@@ -26,6 +28,7 @@ import UserProfilePageS from '../pages/student/UserProfilePageS';
 import GradesF from '../pages/faculty/GradesF'
 import NotificationF from '../pages/faculty/NotificationF';
 import ScheduleF from '../pages/faculty/ScheduleF';
+import SchoolCalendarPageF from '../pages/faculty/SchoolCalendarPageF';
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -93,6 +96,7 @@ const DashboardLayout = () => {
                   <Route path="/enrollment" element={<EnrollmentS />} />
                   <Route path="/schedule" element={<ScheduleS />} />
                   <Route path="/grades" element={<GradesS />} />
+                  <Route path="/billing" element={<BillingS />} />
                   <Route path="/notification" element={<NotificationS />} />
                   <Route path="/calendar" element={<SchoolCalendarPageS/>} />
                   <Route path="/profile" element={<UserProfilePageS />} />
@@ -104,7 +108,7 @@ const DashboardLayout = () => {
                   <Route path="/schedule" element={<ScheduleF />} />
                   <Route path="/grades" element={<GradesF />} />
                   <Route path="/notification" element={<NotificationsPage />} />
-                  <Route path="/calendar" element={<SchoolCalendar/>} />
+                  <Route path="/calendar" element={<SchoolCalendarPageF/>} />
                   <Route path="/profile" element={<UserProfilePage />} />
                   {/* <Route path="/" element={<ScheduleF />} />
                   <Route path="/grades" element={<GradesF />} />

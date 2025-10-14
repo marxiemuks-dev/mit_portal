@@ -11,11 +11,7 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
 import { useNavigate } from 'react-router-dom';
-import { deepOrange, deepPurple } from '@mui/material/colors';
-
-const settings = ['Profile','Account','Logout'];
 const getRoleColor = (role) => {
   switch (role) {
     case "admin":
@@ -86,7 +82,8 @@ function ResponsiveAppBar() {
         {id:2, pageName: "Enrollment", link: "enrollment" },
         {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
-        {id:6, pageName: "Calendar", link: "calendar" }
+        {id:6, pageName: "Calendar", link: "calendar" },
+        {id:5, pageName: "Billing", link: "billing" },
       ];
       settings = ['Profile','Logout']
     }else if(user?.role === 'faculty'){

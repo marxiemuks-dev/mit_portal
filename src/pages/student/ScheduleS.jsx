@@ -39,6 +39,7 @@ import { addSchedule, getAllSchedule } from "../../actions/schedule";
     'HRM (Hotel and Restaurant Management)'
   ];
 
+const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
 const semesters = ["1st Semester", "2nd Semester"];
 const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
 
@@ -54,6 +55,7 @@ export default function SchedulePage() {
     severity: "success"
   });
 
+  const [yearLevelFilter, setYearLevelFilter] = useState("All Year Level");
   const [filterCourse, setFilterCourse] = useState("All Courses");
   const [filterSemester, setFilterSemester] = useState(semesters[0]);
   const [filterSchoolYear, setFilterSchoolYear] = useState(schoolYears[0]);
@@ -87,6 +89,8 @@ export default function SchedulePage() {
         course: s.course,
         semester: s.semester,
         schoolYear: s.school_year,
+        section: s.section,
+        yearLevel: s.year_level
       }));
 
       setSchedules(formattedSchedules);
@@ -112,27 +116,6 @@ export default function SchedulePage() {
     };
     fetchFaculty();
   }, []);
-
-  const handleOpenDialog = (schedule = null) => {
-    setSelectedSchedule(schedule);
-    if (schedule) {
-      setNewSchedule(schedule);
-    } else {
-      setNewSchedule({
-        course: courses[0],
-        semester: semesters[0],
-        schoolYear: schoolYears[0],
-        subjectCode: "",
-        descriptiveTitle: "",
-        units: "",
-        time: "",
-        day: "",
-        room: "",
-        instructor: "",
-      });
-    }
-    setOpenDialog(true);
-  };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -212,7 +195,8 @@ const filteredSchedules = schedules.filter(
   (s) =>
     (filterCourse === "All Courses" || s.course === filterCourse) &&
     s.semester === filterSemester &&
-    s.schoolYear === filterSchoolYear
+    s.schoolYear === filterSchoolYear &&
+    (yearLevelFilter === "All Year Level" || s.yearLevel === yearLevelFilter)
 );
 
   const handlePrint = () => {
@@ -259,6 +243,14 @@ const filteredSchedules = schedules.filter(
             </MenuItem>
           ))}
         </Select>
+        <Select value={yearLevelFilter} onChange={(e) => setYearLevelFilter(e.target.value)}>
+          <MenuItem value="All Year Level">All Year Level</MenuItem>
+          {yearLevels.map((c) => (
+            <MenuItem key={c} value={c}>
+                      {c}
+            </MenuItem>
+          ))}
+        </Select>
         <Select value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
           {semesters.map((s) => (
             <MenuItem key={s} value={s}>
@@ -301,6 +293,8 @@ const filteredSchedules = schedules.filter(
             <TableCell>Time</TableCell>
             <TableCell>Day</TableCell>
             <TableCell>Room</TableCell>
+            <TableCell align="center">Section</TableCell>
+            <TableCell>Year Level</TableCell>
             <TableCell>Instructor</TableCell>
           </TableRow>
         </TableHead>
@@ -314,6 +308,8 @@ const filteredSchedules = schedules.filter(
               <TableCell>{row.time}</TableCell>
               <TableCell>{row.day}</TableCell>
               <TableCell>{row.room}</TableCell>
+              <TableCell align="center">{row.section}</TableCell>
+              <TableCell>{row.yearLevel}</TableCell>
               <TableCell>{row.instructor}</TableCell>
             </TableRow>
           ))}

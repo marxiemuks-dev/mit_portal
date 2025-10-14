@@ -13,6 +13,7 @@ import { getAllEnrollments } from "../../actions/enrollment";
 import { useDispatch } from "react-redux";
 import SchoolCalendar from "../../components/SchoolCalendar";
 import { getAllStudents } from "../../actions/student";
+import { getNotifications } from "../../actions/notification";
 
 const stats = [
   { title: "Payments Processed", value: "₱ 12,500", icon: <PaymentIcon fontSize="large" color="primary" /> },
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [studentList, setStudentList] = useState([]);
+    const [notifications, setNotifications] = useState([]);
 
   const fetchEnrollments = async () => {
     const result = await dispatch(getAllEnrollments());
@@ -33,9 +35,19 @@ export default function Dashboard() {
     }
     setStudentList(result1.data)
   };
+      const fetchNotification = async () => {
+        try {
+          const result = await dispatch(getNotifications());
+          setNotifications(result.data)
+          console.log(result)
+        } catch (err) {
+          console.error("Error fetching events:", err);
+        }
+      };
 
   useEffect(() => {
     fetchEnrollments();
+    fetchNotification()
   }, []);
 
   return (
