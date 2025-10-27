@@ -87,11 +87,22 @@ const getStudentGradeEvaluation = (studentID) => {
         })
     })
 }
+const getGradeForEverySchedule = () => {
+    return axiosInstance.get(API_URL + `grade/schedule/all/evaluation`)
+    .then((response) => {
+        return ({
+            message: response.data.message,
+            status: response.data.status,
+            data: response.data.data
+        })
+    })
+}
 export default {
     getAllGrades,
     addStudentGrades,
     getStudentGradesBySchedule,
     updateStudentGrade,
     getStudentGradesByStudentId,
-    getStudentGradeEvaluation
+    getStudentGradeEvaluation,
+    getGradeForEverySchedule
 }

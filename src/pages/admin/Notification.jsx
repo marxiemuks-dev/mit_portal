@@ -67,8 +67,18 @@ export default function NotificationsPage() {
     const fetchNotification = async () => {
       try {
         const result = await dispatch(getNotifications());
-        setNotifications(result.data)
-        console.log(result)
+        console.log("All Notifications:", result.data);
+  
+        if (result?.data) {
+          const filtered = result.data.filter(
+            (item) =>
+              item.target_type === "ALL" ||
+              item.target_type === "ADMIN"
+          );
+  
+          console.log("Filtered Announcements:", filtered);
+          setNotifications(filtered);
+        }
       } catch (err) {
         console.error("Error fetching events:", err);
       }
@@ -268,7 +278,7 @@ export default function NotificationsPage() {
               value={formData.target_type}
               onChange={handleChangeAdd}
             >
-              {["ALL", "USER", "FACULTY", "STUDENT"].map((type) => (
+              {["ALL", "FACULTY", "STUDENT", "ADMIN", "REGISTRAR", "CASHIER"].map((type) => (
                 <MenuItem key={type} value={type}>
                   {type}
                 </MenuItem>

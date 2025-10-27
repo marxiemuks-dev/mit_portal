@@ -91,15 +91,7 @@ export default function Grades() {
   const [enrolledStudent, setEnrolledStudent] = useState([])
 
   const handleGradeChange = (studentId, field, value) => {
-    
-    // setSelectedSubject((prev) => ({
-    //   ...prev,
-    //   students: prev.students.map((student) =>
-    //     student.id === studentId
-    //       ? { ...student, [field]: Number(value) }
-    //       : student
-    //   ),
-    // }));
+
   };
 
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -265,12 +257,38 @@ export default function Grades() {
   }, [loading, dispatch]);
 
 
-const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState(0);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
+  const getRemarks = (student) => {
+    // Check for any blank/undefined grades
+    const { premid, midterm, prefinal, finalterm } = student;
+    if (
+      premid === null ||
+      midterm === null ||
+      prefinal === null ||
+      finalterm === null ||
+      premid === 0 ||
+      midterm === 0 ||
+      prefinal === 0 ||
+      finalterm === 0
+    ) {
+      return "Incomplete";
+    }
+
+    const avg = parseFloat(computeFinalGrade(student));
+    if (avg >= 1.0 && avg <= 1.25) return "Excellent";
+    if (avg > 1.26 && avg <= 1.99) return "Very Good";
+    if (avg > 2.0 && avg <= 2.49) return "Good";
+    if (avg > 2.50 && avg <= 2.99) return "Satisfactory";
+    if (avg === 3.00) return "Passing";
+    if (avg >= 3.1  && avg <= 5.0) return "Failure";
+
+    return ""; // fallback
+  };
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -389,7 +407,7 @@ const [value, setValue] = React.useState(0);
                 </Box>
 
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Teacher: {selectedSubject.instructor}
+                  Submitted By: {selectedSubject.instructor}
                 </Typography>
                 <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
                   <Table>
@@ -403,6 +421,7 @@ const [value, setValue] = React.useState(0);
                         <TableCell>Pre-Final</TableCell>
                         <TableCell>Final-Term</TableCell>
                         <TableCell>Average</TableCell>
+                        <TableCell>Remarks</TableCell>
                         <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
@@ -461,6 +480,7 @@ const [value, setValue] = React.useState(0);
                             />
                           </TableCell>
                           <TableCell>{computeFinalGrade(student)}</TableCell>
+                          <TableCell>{getRemarks(student)}</TableCell>
                           <TableCell>
                           <Button
                             variant="contained"

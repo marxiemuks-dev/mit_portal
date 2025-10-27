@@ -22,8 +22,8 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { useDispatch } from "react-redux";
-import { getAllStudents } from "../actions/student";
-import { getGradeForEverySchedule } from "../actions/grade";
+import { getAllStudents } from "../../actions/student";
+import { getGradeForEverySchedule } from "../../actions/grade";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
@@ -77,96 +77,115 @@ const GradeEvaluation = () => {
     return "";
   };
 
-  // ✅ Fetch all students
-  const fetchStudents = async () => {
+// ✅ Fetch all students
+const fetchStudents = async () => {
+  try {
+    // Get current logged-in user
+    const storedUser = localStorage.getItem("mitportal_user");
+    if (!storedUser) return;
+
+    const parsedUser = JSON.parse(storedUser);
+
+    // Fetch all students
+    const result = await dispatch(getAllStudents());
+    if (result.status === true) {
+      // Format student list for Autocomplete
+      const formatted = result.data.map((s) => ({
+        id: s.id,
+        label: `${s.student_no} | ${s.first_name} ${s.last_name} | ${s.course}`,
+      }));
+      setStudentList(formatted);
+
+      // ✅ Automatically select the logged-in student
+      const matchedStudent = formatted.find(
+        (s) => s.id === parsedUser.userStudentID
+      );
+
+      if (matchedStudent) {
+        setSelectedStudent(matchedStudent);
+      }
+    }
+  } catch (err) {
+    console.error("Error fetching students:", err);
+  }
+};
+
+// ✅ Load students and auto-select logged-in student on mount
+useEffect(() => {
+  fetchStudents();
+}, []);
+
+// ✅ Fetch grade evaluation when student is selected
+useEffect(() => {
+  const fetchGrades = async () => {
+    if (!selectedStudent) return;
+    setLoading(true);
+    setError("");
+    setData(null);
+
     try {
-      const result = await dispatch(getAllStudents());
-      if (result.status === true) {
-        const formatted = result.data.map((s) => ({
-          id: s.id,
-          label: `${s.student_no} | ${s.first_name} ${s.last_name} | ${s.course}`,
-        }));
-        setStudentList(formatted);
+      const result = await dispatch(getGradeForEverySchedule());
+      if (result.status) {
+        // ✅ Filter only the selected student
+        const student = result.data.find(
+          (s) => s.student_id === selectedStudent.id
+        );
+
+        if (!student) {
+          setError("No grades found for this student");
+          setData(null);
+          return;
+        }
+
+        // ✅ Group student's subjects by school_year + semester
+        const grouped = {};
+        student.subjects.forEach((subject) => {
+          const key = `${subject.school_year} - ${subject.semester}`;
+          if (!grouped[key]) {
+            grouped[key] = {
+              school_year: subject.school_year,
+              semester: subject.semester,
+              subjects: [],
+            };
+          }
+
+          // Compute average and remark
+          const avg = computeFinalGrade(subject);
+          const remark = getRemarks(subject);
+
+          grouped[key].subjects.push({
+            ...subject,
+            average: avg,
+            remark,
+          });
+        });
+
+        const formattedData = {
+          student: {
+            name: student.student_name,
+            student_no: student.student_no,
+            course: student.course,
+            year_level: student.year_level,
+            email: student.email || "N/A",
+          },
+          evaluation: Object.values(grouped),
+        };
+
+        setData(formattedData);
+      } else {
+        setError(result.message || "Failed to fetch grades");
       }
     } catch (err) {
-      console.error("Error fetching students:", err);
+      console.error("❌ Server error while fetching grade evaluation", err);
+      setError("Server error while fetching grade evaluation");
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  fetchGrades();
+}, [selectedStudent]);
 
-  // ✅ Fetch grade evaluation when student is selected
-  useEffect(() => {
-    const fetchGrades = async () => {
-      if (!selectedStudent) return;
-      setLoading(true);
-      setError("");
-      setData(null);
-
-      try {
-        const result = await dispatch(getGradeForEverySchedule());
-        if (result.status) {
-          // ✅ Filter only selected student
-          const student = result.data.find(
-            (s) => s.student_id === selectedStudent.id
-          );
-
-          if (!student) {
-            setError("No grades found for this student");
-            setData(null);
-            return;
-          }
-
-          // ✅ Group student's subjects by school_year + semester
-          const grouped = {};
-          student.subjects.forEach((subject) => {
-            const key = `${subject.school_year} - ${subject.semester}`;
-            if (!grouped[key]) {
-              grouped[key] = {
-                school_year: subject.school_year,
-                semester: subject.semester,
-                subjects: [],
-              };
-            }
-
-            // Compute average and remark using your logic
-            const avg = computeFinalGrade(subject);
-            const remark = getRemarks(subject);
-
-            grouped[key].subjects.push({
-              ...subject,
-              average: avg,
-              remark,
-            });
-          });
-
-          const formattedData = {
-            student: {
-              name: student.student_name,
-              student_no: student.student_no,
-              course: student.course,
-              year_level: student.year_level,
-              email: student.email || "N/A",
-            },
-            evaluation: Object.values(grouped),
-          };
-
-          setData(formattedData);
-        } else {
-          setError(result.message || "Failed to fetch grades");
-        }
-      } catch (err) {
-        console.error("❌ Server error while fetching grade evaluation", err);
-        setError("Server error while fetching grade evaluation");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGrades();
-  }, [selectedStudent]);
 
   // ✅ Generate PDF (also includes Average + Remark)
   const handlePrintPDF = () => {
@@ -252,17 +271,6 @@ const GradeEvaluation = () => {
       <Typography variant="h4" fontWeight="bold" mb={3} textAlign="center">
         Student Grade Evaluation
       </Typography>
-
-      <Box sx={{ mb: 4 }}>
-        <Autocomplete
-          options={studentList}
-          getOptionLabel={(option) => option.label}
-          onChange={(e, newValue) => setSelectedStudent(newValue)}
-          renderInput={(params) => (
-            <TextField {...params} label="Search Student" variant="outlined" fullWidth />
-          )}
-        />
-      </Box>
 
       {loading && (
         <Box display="flex" justifyContent="center" alignItems="center" height="40vh">

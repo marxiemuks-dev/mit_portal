@@ -41,36 +41,38 @@ const initialNotifications = [
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(initialNotifications);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false)
+  const [currentStudent, setCurrentStudent] = useState(null);
   const dispatch = useDispatch();
-  const [formData, setFormData] = useState({
-    title: "",
-    message: "",
-    target_type: "ALL",
-    target_user_id: "",
-  });
-  const [editFormData, setEditFormData] = useState({
-    notification_id: null,
-    title: "",
-    message: "",
-    target_type: "ALL",
-    target_user_id: "",
-  });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-
     const fetchNotification = async () => {
+      const storedUser = localStorage.getItem("mitportal_user");
+      if (!storedUser) return;
+  
+      const parsedUser = JSON.parse(storedUser);
+      setCurrentStudent(parsedUser);
+  
       try {
         const result = await dispatch(getNotifications());
-        setNotifications(result.data)
-        console.log(result)
+        console.log("All Notifications:", result.data);
+  
+        if (result?.data) {
+          const filtered = result.data.filter(
+            (item) =>
+              item.target_type === "ALL" ||
+              (item.target_type === "STUDENT" &&
+                item.target_user_id === parsedUser.userStudentID ||
+                item.target_user_id === null)
+          );
+  
+          console.log("Filtered Announcements:", filtered);
+          setNotifications(filtered);
+        }
       } catch (err) {
-        console.error("Error fetching events:", err);
+        console.error("Error fetching announcements:", err);
       }
     };
       useEffect(() => {
@@ -79,95 +81,10 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter((notif) => !notif.read).length;
 
-  // ---------------- Handlers ----------------
-  const handleChange = (e, isEdit = false) => {
-    const setter = isEdit ? setEditFormData : setFormData;
-    const state = isEdit ? editFormData : formData;
-    setter({ ...state, [e.target.name]: e.target.value });
-  };
-
-  const handleChangeAdd = (e) => {
-    setFormData({...formData, [e.target.name]: e.target.value})
-  };
-
-
-  const handleAdd = async () => {
-    const { title, message, target_type, target_user_id } = formData;
-    if (!title || !message || !target_type) {
-      setSnackbar({ open: true, message: "All fields are required!", severity: "warning" });
-      return;
-    }
-    setIsLoading(true)
-    try {
-      const result = await dispatch(addNotification(title, message, target_type, target_user_id, false))
-      const newNotif = {
-        notification_id: Date.now(),
-        title,
-        message,
-        target_type,
-        target_user_id: target_type === "USER" ? target_user_id : null,
-        read: false,
-      };
-      setNotifications([newNotif, ...notifications]);
-      setSnackbar({ open: true, message: "Notification added!", severity: "success" });
-      setAddDialogOpen(false);
-      fetchNotification();
-      setFormData({ title: "", message: "", target_type: "ALL", target_user_id: "" });
-    } catch (err) {
-      console.error(err);
-      setSnackbar({ open: true, message: "Failed to add notification.", severity: "error" });
-    }finally{
-      setIsLoading(false)
-    }
-  };
-
-  const handleEdit = (notif) => {
-    setEditFormData({
-      notification_id: notif.notification_id,
-      title: notif.title,
-      message: notif.message,
-      target_type: notif.target_type,
-      target_user_id: notif.target_user_id || "",
-    });
-    setEditDialogOpen(true);
-  };
-
-  const handleSaveEdit = async () => {
-    const { notification_id, title, message, target_type, target_user_id } = editFormData;
-    if (!title || !message || !target_type) {
-      setSnackbar({ open: true, message: "All fields are required!", severity: "warning" });
-      return;
-    }
-
-    try {
-      const result = await dispatch(updateNotification(notification_id, title, message, target_type, target_user_id, false))
-      console.log(result)
-      setNotifications(
-        notifications.map((n) =>
-          n.notification_id === notification_id
-            ? { ...n, title, message, target_type, target_user_id: target_type === "USER" ? target_user_id : null }
-            : n
-        )
-      );
-      fetchNotification()
-      setSnackbar({ open: true, message: "Notification updated!", severity: "success" });
-      setEditDialogOpen(false);
-    } catch (err) {
-      console.error(err);
-      setSnackbar({ open: true, message: "Failed to update notification.", severity: "error" });
-    }
-  };
-
   const markAsRead = (id) => {
     setNotifications(
       notifications.map((notif) => (notif.notification_id === id ? { ...notif, read: true } : notif))
     );
-  };
-
-  const deleteNotification = (id) => {
-    if (window.confirm("Are you sure you want to delete this notification?")) {
-      setNotifications(notifications.filter((notif) => notif.notification_id !== id));
-    }
   };
 
   return (
@@ -215,12 +132,6 @@ export default function NotificationsPage() {
                         <DoneIcon color="primary" />
                       </IconButton>
                     )}
-                    <IconButton onClick={() => handleEdit(notif)}>
-                      <EditIcon color="info" />
-                    </IconButton>
-                    {/* <IconButton onClick={() => deleteNotification(notif.notification_id)}>
-                      <DeleteIcon color="error" />
-                    </IconButton> */}
                   </Box>
                 }
               >
@@ -237,116 +148,6 @@ export default function NotificationsPage() {
           ))}
         </List>
       </Paper>
-
-      {/* ➕ Add Dialog */}
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Notification</DialogTitle>
-        <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2} mt={1}>
-            <TextField
-              label="Title"
-              name="title"
-              value={formData.title}
-              onChange={handleChangeAdd}
-              fullWidth
-            />
-            <TextField
-              label="Message"
-              name="message"
-              value={formData.message}
-              onChange={handleChangeAdd}
-              fullWidth
-            />
-            <TextField
-              select
-              label="Target Type"
-              name="target_type"
-              value={formData.target_type}
-              onChange={handleChangeAdd}
-            >
-              {["ALL", "USER", "FACULTY", "STUDENT"].map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </TextField>
-            {formData.target_type === "USER" && (
-              <TextField
-                label="Target User ID"
-                name="target_user_id"
-                type="number"
-                value={formData.target_user_id}
-                onChange={handleChangeAdd}
-                fullWidth
-              />
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleAdd}
-            disabled={isLoading} // disable button while loading
-            startIcon={isLoading && <CircularProgress size={20} color="inherit" />}
-              >
-                {isLoading ? "Saving..." : "Save"}
-          </Button>
-
-        </DialogActions>
-      </Dialog>
-
-      {/* ✏️ Edit Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Notification</DialogTitle>
-        <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2} mt={1}>
-            <TextField
-              label="Title"
-              name="title"
-              value={editFormData.title}
-              onChange={(e) => handleChange(e, true)}
-              fullWidth
-            />
-            <TextField
-              label="Message"
-              name="message"
-              value={editFormData.message}
-              onChange={(e) => handleChange(e, true)}
-              fullWidth
-            />
-            <TextField
-              select
-              label="Target Type"
-              name="target_type"
-              value={editFormData.target_type}
-              onChange={(e) => handleChange(e, true)}
-            >
-              {["ALL", "USER", "FACULTY", "STUDENT"].map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </TextField>
-            {editFormData.target_type === "USER" && (
-              <TextField
-                label="Target User ID"
-                name="target_user_id"
-                type="number"
-                value={editFormData.target_user_id}
-                onChange={(e) => handleChange(e, true)}
-                fullWidth
-              />
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveEdit}>
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

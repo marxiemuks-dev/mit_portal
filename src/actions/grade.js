@@ -64,3 +64,15 @@ export const getStudentGradeEvaluation = (studentID) => (dispatch) => {
         return error
     })
 }
+export const getGradeForEverySchedule = () => (dispatch) => {
+    return gradeService.getGradeForEverySchedule()
+    .then((response)=> {
+        dispatch({
+            type: GET_GRADES_BY_SCHEDULE,
+            payload: response.data
+        });
+        return response
+    },(error) => {
+        return error
+    })
+}

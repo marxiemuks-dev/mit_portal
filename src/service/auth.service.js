@@ -60,6 +60,32 @@ const updateUser = (selectedUserId,username,password,usertype,first_name,last_na
 }
 
 
+const updateProfilePicture = (selectedUserId, formData) => {
+  return axiosInstance
+    .put(API_URL + `users/picture/${selectedUserId}`, formData)
+    .then((response) => ({
+      message: response.data.message,
+      status: response.data.status,
+    }))
+    .catch((error) => ({
+      message: error.response?.data?.message || "Something went wrong",
+      status: "error",
+    }));
+};
+
+const updateUserPassword = (username) => {
+  return axiosInstance.patch(API_URL + `users/reset/password`,{
+    username
+  }).then((response)=> ({
+    message: response.data.message,
+    status: response.data.status,
+  }))
+  .catch((error) => ({
+    message: error.response?.data?.message || "Something went wrong",
+    status: "error",
+  }));
+}
+
 const handleLogout = () => {
 
   localStorage.removeItem("mitportal_user");
@@ -76,5 +102,7 @@ export default {
   handleLogout,
   getAllUser,
   addUser,
-  updateUser
+  updateUser,
+  updateProfilePicture,
+  updateUserPassword
 };

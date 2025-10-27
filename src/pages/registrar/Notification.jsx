@@ -65,12 +65,27 @@ export default function NotificationsPage() {
   });
 
     const fetchNotification = async () => {
+      const storedUser = localStorage.getItem("mitportal_user");
+      if (!storedUser) return;
+  
+      const parsedUser = JSON.parse(storedUser);
+  
       try {
         const result = await dispatch(getNotifications());
-        setNotifications(result.data)
-        console.log(result)
+        console.log("All Notifications:", result.data);
+  
+        if (result?.data) {
+          const filtered = result.data.filter(
+            (item) =>
+              item.target_type === "ALL" ||
+              item.target_type === "REGISTRAR"
+          );
+  
+          console.log("Filtered Announcements:", filtered);
+          setNotifications(filtered);
+        }
       } catch (err) {
-        console.error("Error fetching events:", err);
+        console.error("Error fetching announcements:", err);
       }
     };
       useEffect(() => {
@@ -219,12 +234,6 @@ export default function NotificationsPage() {
                         <DoneIcon color="primary" />
                       </IconButton>
                     )}
-                    <IconButton onClick={() => handleEdit(notif)}>
-                      <EditIcon color="info" />
-                    </IconButton>
-                    {/* <IconButton onClick={() => deleteNotification(notif.notification_id)}>
-                      <DeleteIcon color="error" />
-                    </IconButton> */}
                   </Box>
                 }
               >
@@ -268,7 +277,7 @@ export default function NotificationsPage() {
               value={formData.target_type}
               onChange={handleChangeAdd}
             >
-              {["ALL", "USER", "FACULTY", "STUDENT"].map((type) => (
+              {["ALL", "FACULTY", "STUDENT", "ADMIN", "REGISTRAR", "CASHIER"].map((type) => (
                 <MenuItem key={type} value={type}>
                   {type}
                 </MenuItem>

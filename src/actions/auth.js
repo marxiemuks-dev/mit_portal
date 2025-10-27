@@ -82,3 +82,30 @@ export const updateUser = (selectedUserId, formData) => (dispatch) => {
   return error
 })
 }
+export const updateProfilePicture = (selectedUserId, formData) => (dispatch) => {
+  console.log(formData)
+  return AuthService.updateProfilePicture(selectedUserId,formData)
+  .then((response)=> {
+    dispatch({
+      type:ADD_USER,
+      payload: response
+    })
+    return response;
+  },
+(error) => {
+  return error
+})
+}
+export const updateUserPassword = (selectedUserId, formData) => (dispatch) => {
+  return AuthService.updateUserPassword(formData.username)
+  .then((response)=> {
+    dispatch({
+      type:ADD_USER,
+      payload: response
+    })
+    return response;
+  },
+(error) => {
+  return error
+})
+}

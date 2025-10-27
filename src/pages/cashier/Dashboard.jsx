@@ -39,7 +39,7 @@ export default function Dashboard() {
             const filtered = result.data.filter(
               (item) =>
                 item.visibility === "ALL" ||
-                item.visibility === "FACULTY"
+                item.visibility === "CASHIER"
             );
     
             console.log("Filtered Announcements:", filtered);

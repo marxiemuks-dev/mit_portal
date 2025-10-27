@@ -70,6 +70,7 @@ const MOCK_STUDENTS = [
 const semesters = ["1st Semester", "2nd Semester", "Summer"];
 const schoolYears = ["2024-2025", "2025-2026", "2026-2027"];
 const scholarshipOptions = ['None', 'Academic Scholarship','Brother & Sister','HASSAN Scholarship','HALUN Scholarship','UNIFAST','TDP','AHME'];
+
 export default function BillingPage() {
   const dispatch = useDispatch();
   const [filterStudentNo, setFilterStudentNo] = useState("");
@@ -102,31 +103,6 @@ export default function BillingPage() {
   // students (fetched or mock)
   const [students, setStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
-  // dialog states
-  const [openDialog, setOpenDialog] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [openAddPayment, setOpenAddPayment] = useState(false);
-  const [addPaymentData, setAddPaymentData] = useState(null);
-  // form data for dialog
-  const initialForm = {
-    student: null, // student object
-    semester: semesters[0],
-    schoolYear: schoolYears[0],
-    scholarshipStatus: scholarshipOptions[0],
-    totalUnit: "",
-    tuitionFee: "",
-    totalMisc: 9500,
-    totalMiscOtherFee: "",
-    prevBalance: "",
-    subsidized: "",
-    fullPayment: "",
-    totalBill: ""
-  };
-  const [formData, setFormData] = useState(initialForm);
-  const [editFormData, setEditFormData] = useState(initialForm);
-  // delete confirmation
-  const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
   // snackbar
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   // fetch students from backend (if action exists)
@@ -175,56 +151,71 @@ export default function BillingPage() {
 
         const result = await dispatch(getAllBilling());
         if (result.status === true) {
-          const formattedBillingData = result.data.map((item) => ({
-            billing_id: item.billing_id,
-            student_id: item.student_id,
-            studentID: item.studentID,
-            totalMisc: item.total_misc ?? 0,
-            totalMiscOtherFee: item.total_misc_other_fee ?? 0,
-            prevBalance: item.previouse_balance ?? 0,
-            subsidized: item.subsidized_by_school ?? 0,
-            totalBill: item.total_bill ?? 0,
-            fullPayment: item.full_payment ?? 0,
-            totalPayment: item.total_payment ?? 0,
-            current_bill: item.current_bill ?? 0,
-            totalUnit: item.total_unit ?? 0,
-            tuitionFee: item.tuition_fee ?? 0,
-            scholarshipStatus: item.scholarship_status || "None",
-            created_at: item.created_at,
-            semester: item.semester || "N/A",
-            schoolYear: item.school_year || "N/A",
+                    const formattedBillingData = result.data.map((item) => {
+            // ✅ Compute payment summary
+            const payments = item.payments || item.payment || [];
+            const totalAmountPaid = payments.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
 
-            // 🧩 Student Information
-            course:
-              item.course ||
-              item.students?.course ||
-              item.studentEnrollment?.current_course ||
-              "N/A",
-            yearLevel:
-              item.year_level ||
-              item.studentEnrollment?.current_year_level ||
-              "N/A",
-            student_no:
-              item.student_no ||
-              item.students?.student_no ||
-              item.studentEnrollment?.students?.student_no ||
-              "N/A",
-            student_uuid:
-              item.students?.id ||
-              item.studentEnrollment?.students?.id ||
-              null,
-            fullName:
-              item.students
-                ? `${item.students.first_name} ${item.students.middle_name || ""} ${item.students.last_name}`.trim()
-                : item.studentEnrollment?.students
-                ? `${item.studentEnrollment.students.first_name} ${item.studentEnrollment.students.middle_name || ""} ${item.studentEnrollment.students.last_name}`.trim()
-                : "N/A",
+            // ✅ Sort payments by date to find the latest
+            const latestPayment = payments.length
+              ? payments.reduce((latest, p) =>
+                  new Date(p.payment_date) > new Date(latest.payment_date) ? p : latest
+                )
+              : null;
 
-            // 🧾 Payments and Nested Data
-            students: item.students || item.studentEnrollment?.students || {},
-            payments: item.payments || item.payment || [],
-          }));
+            return {
+              billing_id: item.billing_id,
+              student_id: item.student_id,
+              studentID: item.studentID,
+              totalMisc: item.total_misc ?? 0,
+              totalMiscOtherFee: item.total_misc_other_fee ?? 0,
+              prevBalance: item.previouse_balance ?? 0,
+              subsidized: item.subsidized_by_school ?? 0,
+              totalBill: item.total_bill ?? 0,
+              fullPayment: item.full_payment ?? 0,
+              totalPayment: item.total_payment ?? 0,
+              current_bill: item.current_bill ?? 0,
+              totalUnit: item.total_unit ?? 0,
+              tuitionFee: item.tuition_fee ?? 0,
+              scholarshipStatus: item.scholarship_status || "None",
+              created_at: item.created_at,
+              semester: item.semester || "N/A",
+              schoolYear: item.school_year || "N/A",
 
+              // 🧩 Student Information
+              course:
+                item.course ||
+                item.students?.course ||
+                item.studentEnrollment?.current_course ||
+                "N/A",
+              yearLevel:
+                item.year_level ||
+                item.studentEnrollment?.current_year_level ||
+                "N/A",
+              student_no:
+                item.student_no ||
+                item.students?.student_no ||
+                item.studentEnrollment?.students?.student_no ||
+                "N/A",
+              student_uuid:
+                item.students?.id ||
+                item.studentEnrollment?.students?.id ||
+                null,
+              fullName:
+                item.students
+                  ? `${item.students.first_name} ${item.students.middle_name || ""} ${item.students.last_name}`.trim()
+                  : item.studentEnrollment?.students
+                  ? `${item.studentEnrollment.students.first_name} ${item.studentEnrollment.students.middle_name || ""} ${item.studentEnrollment.students.last_name}`.trim()
+                  : "N/A",
+
+              // 🧾 Payments and Summary
+              students: item.students || item.studentEnrollment?.students || {},
+              payments,
+              totalAmountPaid,
+              latestPaymentDate: latestPayment ? latestPayment.payment_date : null,
+              referenceNo: latestPayment ? latestPayment.reference_no : null,
+            };
+          });
           // 🧠 Sort alphabetically by last name, then by first name
           const sortedBillingData = formattedBillingData.sort((a, b) => {
             const lastA = a.students?.last_name?.toLowerCase() || "";
@@ -252,7 +243,7 @@ export default function BillingPage() {
     };
 
     fetchBilling();
-  }, [dispatch, openAddPayment]);
+  }, [dispatch]);
 
   const [currentStudent, setCurrentStudent] = useState(null);
   const filteredBilling = billingRecords.filter((billing) => {
@@ -341,6 +332,9 @@ export default function BillingPage() {
                   <TableCell align="right">Total Misc</TableCell>
                   <TableCell align="right">Subsidized</TableCell>
                   <TableCell align="right">Full Payment</TableCell>
+                  <TableCell align="right">Payment</TableCell>
+                  <TableCell align="right">Payment Date</TableCell>
+                  <TableCell align="right">OR Number</TableCell>
                   <TableCell align="right">Current Balance</TableCell>
                 </TableRow>
               </TableHead>
@@ -355,6 +349,9 @@ export default function BillingPage() {
                     <TableCell align="right">₱ {Number(r.totalMisc).toLocaleString()}</TableCell>
                     <TableCell align="right">₱ {Number(r.subsidized).toLocaleString()}</TableCell>
                     <TableCell align="right">₱ {Number(r.fullPayment).toLocaleString()}</TableCell>
+                    <TableCell align="right">₱ {Number(r.totalAmountPaid).toLocaleString()}</TableCell>
+                    <TableCell align="right"> {r.latestPaymentDate}</TableCell>
+                    <TableCell align="right"> {r.referenceNo}</TableCell>
                     <TableCell align="right">₱ {Number(r.current_bill).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}

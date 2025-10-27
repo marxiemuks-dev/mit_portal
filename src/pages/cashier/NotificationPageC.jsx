@@ -63,7 +63,7 @@ export default function NotificationsPage() {
           const filtered = result.data.filter(
             (item) =>
               item.target_type === "ALL" ||
-              item.target_type === "FACULTY"
+              item.target_type === "CASHIER"
           );
   
           console.log("Filtered Announcements:", filtered);

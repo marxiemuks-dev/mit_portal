@@ -87,11 +87,15 @@ export default function SchoolCalendar({calendarData}) {
 
   const handleDateSelect = (day) => {
     setSelectedDate(day);
+
+    // Filter only events on the same date (ignores time)
     const filtered = events.filter((event) =>
       dayjs(event.start_date).isSame(day, "day")
     );
+
     setSelectedEvents(filtered);
   };
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -170,14 +174,19 @@ export default function SchoolCalendar({calendarData}) {
                 </Typography>
                 <List dense>
                   {selectedEvents.map((event, index) => (
-                    <>
-                      <ListItem key={index}>• {event.title}</ListItem>
-                      <ListItem key={index}>• {event.description}</ListItem>
-                    </>
+                    <ListItem key={event.id || index}>
+                      <Box>
+                        <Typography fontWeight="bold">• {event.title}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {event.description}
+                        </Typography>
+                      </Box>
+                    </ListItem>
                   ))}
                 </List>
               </Paper>
             )}
+
             {selectedDate && selectedEvents.length === 0 && (
               <Typography
                 variant="body2"

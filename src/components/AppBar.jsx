@@ -12,6 +12,7 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
+import ASSETS_URL from '../API/ASSETS_URL';
 const getRoleColor = (role) => {
   switch (role) {
     case "admin":
@@ -49,29 +50,31 @@ function ResponsiveAppBar() {
     if(user?.role === 'admin'){
       pages = [
         {id:1, pageName: "Dashboard", link: "" },
-        {id:2, pageName: "Enrollment", link: "enrollment" },
+        {id:2, pageName: "Enrolled", link: "enrollment" },
         {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
         {id:6, pageName: "Calendar", link: "calendar" },
         {id:5, pageName: "Billing", link: "billing" },
+        {id:8, pageName: "Announcement", link: "announcement" },
         {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Account','Logout']
     }else if (user?.role === 'registrar'){
       pages = [
         {id:1, pageName: "Dashboard", link: "" },
-        {id:2, pageName: "Enrollment", link: "enrollment" },
+        {id:2, pageName: "Enrolled", link: "enrollment" },
         {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
         {id:6, pageName: "Calendar", link: "calendar" },
+        {id:8, pageName: "Announcement", link: "announcement" },
         {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Logout']
     }else if(user?.role === 'cashier'){
       pages = [
         {id:1, pageName: "Dashboard", link: "" },
-        {id:6, pageName: "Calendar", link: "calendar" },
         {id:5, pageName: "Billing", link: "billing" },
+        {id:8, pageName: "Announcement", link: "announcement" },
         {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Logout']
@@ -82,8 +85,9 @@ function ResponsiveAppBar() {
         {id:2, pageName: "Enrollment", link: "enrollment" },
         {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
-        {id:6, pageName: "Calendar", link: "calendar" },
         {id:5, pageName: "Billing", link: "billing" },
+        {id:8, pageName: "Announcement", link: "announcement" },
+        {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Logout']
     }else if(user?.role === 'faculty'){
@@ -91,7 +95,7 @@ function ResponsiveAppBar() {
         {id:1, pageName: "Dashboard", link: "" },
         {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
-        {id:6, pageName: "Calendar", link: "calendar" },
+        {id:8, pageName: "Announcement", link: "announcement" },
         {id:7, pageName: "Notification", link: "notification" }
       ];
       settings = ['Profile','Logout']
@@ -227,11 +231,12 @@ function ResponsiveAppBar() {
             <Tooltip title={`${user?.instructor_name} (${user?.role})`}>
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                 <Avatar
+                src={`${ASSETS_URL}${user?.profile_pic}` || ""}
                 sx={{
                   bgcolor: getRoleColor(user?.role),
                   cursor: "pointer",
                 }}
-                alt={user?.instructor_name} src="/static/images/avatar/2.jpg" />
+                alt={user?.instructor_name}/>
               </IconButton>
             </Tooltip>
             <Menu

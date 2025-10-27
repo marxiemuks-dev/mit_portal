@@ -267,74 +267,66 @@ const filteredSchedules = schedules.filter(
         </Select>
       </Box>
       <Card id="print-area" sx={{ mt: 4, p: 2 }}>
-  <CardContent>
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      mb={2}
-    >
-      <Typography variant="h6">
-        Class Schedule
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        Total Subjects: {filteredSchedules.length}
-      </Typography>
-    </Box>
+        <CardContent>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">
+              Class Schedule
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Total Subjects: {filteredSchedules.length}
+            </Typography>
+          </Box>
 
-    <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 2 }}>
-      <Table>
-        <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-          <TableRow>
-            <TableCell>#</TableCell>
-            <TableCell>Subject Code</TableCell>
-            <TableCell>Descriptive Title</TableCell>
-            <TableCell>Units</TableCell>
-            <TableCell>Time</TableCell>
-            <TableCell>Day</TableCell>
-            <TableCell>Room</TableCell>
-            <TableCell align="center">Section</TableCell>
-            <TableCell>Year Level</TableCell>
-            <TableCell>Instructor</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredSchedules.map((row, idx) => (
-            <TableRow key={idx} hover>
-              <TableCell>{idx + 1}</TableCell>
-              <TableCell>{row.subjectCode}</TableCell>
-              <TableCell>{row.descriptiveTitle}</TableCell>
-              <TableCell>{row.units}</TableCell>
-              <TableCell>{row.time}</TableCell>
-              <TableCell>{row.day}</TableCell>
-              <TableCell>{row.room}</TableCell>
-              <TableCell align="center">{row.section}</TableCell>
-              <TableCell>{row.yearLevel}</TableCell>
-              <TableCell>{row.instructor}</TableCell>
-            </TableRow>
-          ))}
-          {filteredSchedules.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                <Typography color="text.secondary">
-                  No schedule data available
-                </Typography>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </CardContent>
-</Card>
-        <Button
-          variant="outlined"
-          color="secondary"
-          sx={{ mb: 2, mt:2}}
-          onClick={() => handlePrint()}
-        >
-          🖨️ Print Schedule
-        </Button>
+          <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 2 }}>
+            <Table>
+              <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Subject Code</TableCell>
+                  <TableCell>Descriptive Title</TableCell>
+                  <TableCell>Units</TableCell>
+                  <TableCell>Time</TableCell>
+                  <TableCell>Day</TableCell>
+                  <TableCell>Room</TableCell>
+                  <TableCell align="center">Section</TableCell>
+                  <TableCell>Year Level</TableCell>
+                  <TableCell>Instructor</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredSchedules.map((row, idx) => (
+                  <TableRow key={idx} hover>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>{row.subjectCode}</TableCell>
+                    <TableCell>{row.descriptiveTitle}</TableCell>
+                    <TableCell>{row.units}</TableCell>
+                    <TableCell>{row.time}</TableCell>
+                    <TableCell>{row.day}</TableCell>
+                    <TableCell>{row.room}</TableCell>
+                    <TableCell align="center">{row.section}</TableCell>
+                    <TableCell>{row.yearLevel}</TableCell>
+                    <TableCell>{row.instructor}</TableCell>
+                  </TableRow>
+                ))}
+                {filteredSchedules.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                      <Typography color="text.secondary">
+                        No schedule data available
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
 
 
       {/* Dialog */}

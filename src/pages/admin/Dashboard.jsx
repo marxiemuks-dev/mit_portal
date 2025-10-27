@@ -31,14 +31,14 @@ export default function Dashboard() {
     const result = await dispatch(getAllEnrollments());
     const result1 = await dispatch(getAllStudents());
     if (result.status === true) {
-      setEnrollments(result.data);
+      setEnrollments(result?.data || [0]);
     }
-    setStudentList(result1.data)
+    setStudentList(result1?.data || [0])
   };
       const fetchNotification = async () => {
         try {
           const result = await dispatch(getNotifications());
-          setNotifications(result.data)
+          setNotifications(result?.data || [0])
           console.log(result)
         } catch (err) {
           console.error("Error fetching events:", err);

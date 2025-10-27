@@ -35,7 +35,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-export default function EnrolledList() {
+export default function Enrolled() {
   const [enrollments, setEnrollments] = useState([]);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -242,16 +242,6 @@ const handlePrint = () => {
           {message}
         </Alert>
       </Snackbar>
-
-      {/* Back Button */}
-      <Box display="flex" alignItems="center" mb={2}>
-        <IconButton onClick={() => navigate(-1)}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h6" ml={1}>
-          Back
-        </Typography>
-      </Box>
 
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         Enrolled Students

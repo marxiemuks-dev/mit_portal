@@ -288,10 +288,10 @@ export default function Enroll() {
                 sx={{ mb: 2, height: "56px", width:'100%' }}
                 onClick={() => setOpenRegister(true)}
               >
-                Register New Student
+                Register Student
               </Button>
             </Box>
-            <Box sx={{flex: 2}}>
+            {/* <Box sx={{flex: 2}}>
               <Button 
                 variant="contained" 
                 color="primary"
@@ -300,7 +300,7 @@ export default function Enroll() {
               >
                 View Enrollment List
               </Button>
-            </Box>
+            </Box> */}
           </Box>
           <Box
             sx={{

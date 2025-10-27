@@ -59,24 +59,10 @@ export default function Grades() {
 
   const handleGradeChange = (studentId, field, value) => {
     
-    // setSelectedSubject((prev) => ({
-    //   ...prev,
-    //   students: prev.students.map((student) =>
-    //     student.id === studentId
-    //       ? { ...student, [field]: Number(value) }
-    //       : student
-    //   ),
-    // }));
   };
 
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState(null);
-
-
-  const computeFinalGrade = (student) => {
-    return ((student.premid + student.midterm + student.prefinal + student.finalterm) / 4).toFixed(2);
-  };
-
   const handlePrint = () => {
   const printContent = document.getElementById("print-area");
 
@@ -138,13 +124,11 @@ export default function Grades() {
       
             try {
             parsedUser = JSON.parse(storedUser);
-                          console.log(parsedUser)
               setCurrentStudent(parsedUser)
             } catch (err) {
               console.error(err);
               navigate("/signin");
             }
-            console.log(schedules)
     const filtered = schedules.filter(
       (s) => s.semester === filterSemester && s.schoolYear === filterSchoolYear && s.instructor === parsedUser.instructor_name
     );
@@ -162,7 +146,6 @@ export default function Grades() {
   const handleSaveStudentSubject = async () => {
     setLoadingAdd(true);
     try {
-      console.log(studentSubjectData)
       const result = await dispatch(addStudentGrades(0,0,0,0,studentSubjectData.studentId,studentSubjectData.subjectId))
       console.log(result)
       if(result.status === "error"){
@@ -204,13 +187,7 @@ export default function Grades() {
       if (selectedSubject?.id) {
         try {
           const result = await dispatch(getStudentGradesBySchedule(selectedSubject.id));
-          console.log("✅ Grades fetched:", result);
           setEnrolledStudent(result.data)
-          // setSnackbar({
-          //   open: true,
-          //   message: result.response.data.message,
-          //   severity: "success"
-          // });
         } catch (error) {
           console.error("❌ Failed to fetch student grades:", error);
           setSnackbar({
@@ -245,6 +222,37 @@ export default function Grades() {
       }
       fetchSchedule()
   }, [loading]);
+
+  const computeFinalGrade = (student) => {
+    return ((student.premid + student.midterm + student.prefinal + student.finalterm) / 4).toFixed(2);
+  };
+
+  const getRemarks = (student) => {
+    // Check for any blank/undefined grades
+    const { premid, midterm, prefinal, finalterm } = student;
+    if (
+      premid === null ||
+      midterm === null ||
+      prefinal === null ||
+      finalterm === null ||
+      premid === 0 ||
+      midterm === 0 ||
+      prefinal === 0 ||
+      finalterm === 0
+    ) {
+      return "Incomplete";
+    }
+
+    const avg = parseFloat(computeFinalGrade(student));
+    if (avg >= 1.0 && avg <= 1.25) return "Excellent";
+    if (avg > 1.26 && avg <= 1.99) return "Very Good";
+    if (avg > 2.0 && avg <= 2.49) return "Good";
+    if (avg > 2.50 && avg <= 2.99) return "Satisfactory";
+    if (avg === 3.00) return "Passing";
+    if (avg >= 3.1  && avg <= 5.0) return "Failure";
+
+    return ""; // fallback
+  };
 
   return (
     <Box sx={{ p: 3, bgcolor: "#f4f6f8", minHeight: "100vh" }}>
@@ -358,256 +366,95 @@ export default function Grades() {
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Teacher: {selectedSubject.instructor}
             </Typography>
-            {/* <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
+            <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
               <Table>
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
                   <TableRow>
                     <TableCell>#</TableCell>
                     <TableCell>Student No</TableCell>
                     <TableCell>Student Name</TableCell>
-                    <TableCell>Prelim</TableCell>
+                    <TableCell>Pre-Mid</TableCell>
                     <TableCell>Midterm</TableCell>
-                    <TableCell>Final</TableCell>
+                    <TableCell>Pre-Final</TableCell>
+                    <TableCell>Final-Term</TableCell>
                     <TableCell>Average</TableCell>
+                    <TableCell>Remarks</TableCell> {/* ✅ Added */}
                     <TableCell>Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {enrolledStudent.map((student, index) => (
-                    <TableRow key={student.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{student.student_no}</TableCell>
-                      <TableCell>{student.student_name}</TableCell>
-                      <TableCell>
-                        <TextField
-                          disabled
-                          type="number"
-                          size="small"
-                          value={student.prelim}
-                          onChange={(e) =>
-                            handleGradeChange(student.id, "prelim", e.target.value)
-                          }
-                          sx={{ width: 80 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          disabled
-                          type="number"
-                          size="small"
-                          value={student.midterm}
-                          onChange={(e) =>
-                            handleGradeChange(student.id, "midterm", e.target.value)
-                          }
-                          sx={{ width: 80 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          disabled
-                          type="number"
-                          size="small"
-                          value={student.final}
-                          onChange={(e) =>
-                            handleGradeChange(student.id, "final", e.target.value)
-                          }
-                          sx={{ width: 80 }}
-                        />
-                      </TableCell>
-                      <TableCell>{computeFinalGrade(student)}</TableCell>
-                      <TableCell>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => {
-                          setSelectedGrade(student);
-                          setOpenEditDialog(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer> */}
-                        <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
-                          <Table>
-                            <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-                              <TableRow>
-                                <TableCell>#</TableCell>
-                                <TableCell>Student No</TableCell>
-                                <TableCell>Student Name</TableCell>
-                                <TableCell>Pre-Mid</TableCell>
-                                <TableCell>Midterm</TableCell>
-                                <TableCell>Pre-Final</TableCell>
-                                <TableCell>Final-Term</TableCell>
-                                <TableCell>Average</TableCell>
-                                <TableCell>Action</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {enrolledStudent.map((student, index) => (
-                                <TableRow key={student.id}>
-                                  <TableCell>{index + 1}</TableCell>
-                                  <TableCell>{student.student_no}</TableCell>
-                                  <TableCell>{student.student_name}</TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.premid}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "premid", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.midterm}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "midterm", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.prefinal}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "prefinal", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      type="number"
-                                      size="small"
-                                      value={student.finalterm}
-                                      onChange={(e) =>
-                                        handleGradeChange(student.id, "finalterm", e.target.value)
-                                      }
-                                      sx={{ width: 80 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>{computeFinalGrade(student)}</TableCell>
-                                  <TableCell>
-                                  <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={() => {
-                                      setSelectedGrade(student);
-                                      setOpenEditDialog(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </Button>
-                                </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-
-
-            {/* <Dialog
-              open={openEditDialog}
-              onClose={() => setOpenEditDialog(false)}
-              fullWidth
-              maxWidth="sm"
-            >
-              <DialogTitle>Edit Student Grade</DialogTitle>
-              <DialogContent>
-                {selectedGrade && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      {selectedGrade.student_name} ({selectedGrade.student_no})
-                    </Typography>
-                    <TextField
-                      margin="normal"
-                      label="Prelim"
-                      type="number"
-                      fullWidth
-                      value={selectedGrade.prelim || ""}
-                      onChange={(e) =>
-                        setSelectedGrade({ ...selectedGrade, prelim: e.target.value })
-                      }
-                    />
-                    <TextField
-                      margin="normal"
-                      label="Midterm"
-                      type="number"
-                      fullWidth
-                      value={selectedGrade.midterm || ""}
-                      onChange={(e) =>
-                        setSelectedGrade({ ...selectedGrade, midterm: e.target.value })
-                      }
-                    />
-                    <TextField
-                      margin="normal"
-                      label="Final"
-                      type="number"
-                      fullWidth
-                      value={selectedGrade.final || ""}
-                      onChange={(e) =>
-                        setSelectedGrade({ ...selectedGrade, final: e.target.value })
-                      }
-                    />
-                  </Box>
-                )}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
-                <Button
-                  variant="contained"
-                  onClick={async () => {
-                    try {
-                      const result = await dispatch(
-                        updateStudentGrade(
-                          selectedGrade.id,
-                          selectedGrade.prelim,
-                          selectedGrade.midterm,
-                          selectedGrade.final
-                        )
-                      );
-                      console.log(result)
-                      setSnackbar({
-                        open: true,
-                        message: "✅ Grade updated successfully!",
-                        severity: "success",
-                      });
-                      setOpenEditDialog(false);
-
-                      // Refresh table
-                      const refresh = await dispatch(
-                        getStudentGradesBySchedule(selectedSubject.id)
-                      );
-                      setEnrolledStudent(refresh.data);
-                    } catch (error) {
-                      console.error(error);
-                      setSnackbar({
-                        open: true,
-                        message: "❌ Failed to update grade",
-                        severity: "error",
-                      });
-                    }
-                  }}
-                >
-                  Save
-                </Button>
-              </DialogActions>
-            </Dialog> */}
+                    {enrolledStudent.map((student, index) => (
+                      <TableRow key={student.id}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{student.student_no}</TableCell>
+                        <TableCell>{student.student_name}</TableCell>
+                        <TableCell>
+                          <TextField
+                            disabled
+                            type="number"
+                            size="small"
+                            value={student.premid}
+                            onChange={(e) =>
+                              handleGradeChange(student.id, "premid", e.target.value)
+                            }
+                            sx={{ width: 80 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            disabled
+                            type="number"
+                            size="small"
+                            value={student.midterm}
+                            onChange={(e) =>
+                              handleGradeChange(student.id, "midterm", e.target.value)
+                            }
+                            sx={{ width: 80 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            disabled
+                            type="number"
+                            size="small"
+                            value={student.prefinal}
+                            onChange={(e) =>
+                              handleGradeChange(student.id, "prefinal", e.target.value)
+                            }
+                            sx={{ width: 80 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            disabled
+                            type="number"
+                            size="small"
+                            value={student.finalterm}
+                            onChange={(e) =>
+                              handleGradeChange(student.id, "finalterm", e.target.value)
+                            }
+                            sx={{ width: 80 }}
+                          />
+                        </TableCell>
+                        <TableCell>{computeFinalGrade(student)}</TableCell>
+                        <TableCell>{getRemarks(student)}</TableCell> {/* ✅ Added */}
+                        <TableCell>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => {
+                              setSelectedGrade(student);
+                              setOpenEditDialog(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             <Dialog
               open={openEditDialog}
               onClose={() => setOpenEditDialog(false)}

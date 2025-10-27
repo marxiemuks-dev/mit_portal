@@ -32,7 +32,6 @@ import { addSchedule, deleteSchedule, getAllSchedule, updateSchedule } from "../
 import EditIcon from "@mui/icons-material/Edit";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { useNavigate } from 'react-router-dom';
 
   const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
   const semesters = ["1st Semester", "2nd Semester", "Summer"];
@@ -67,8 +66,6 @@ export default function SchedulePage() {
   const [filterSemester, setFilterSemester] = useState(semesters[0]);
   const [filterSchoolYear, setFilterSchoolYear] = useState(schoolYears[0]);
   const [facultyList, setFacultyList] = useState([]); // 👈 instructors list
-  const navigate = useNavigate();
-  const [currentStudent, setCurrentStudent] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
     course: courses[0],
     semester: semesters[0],
@@ -93,18 +90,6 @@ export default function SchedulePage() {
           console.error("No schedule data returned:", result);
           return;
         }
-        const storedUser = localStorage.getItem("mitportal_user");
-            if (!storedUser) {
-              return;
-            }
-      
-            try {
-              const parsedUser = JSON.parse(storedUser);
-                          console.log(parsedUser)
-              setCurrentStudent(parsedUser)
-            } catch (err) {
-              console.error(err);
-            }
 
         console.log(result)
         const formattedSchedules = result.data.map((s) => ({
@@ -134,32 +119,17 @@ export default function SchedulePage() {
     fetchSchedule();
   }, [newSchedule, loading, dispatch]);
 
+  
   useEffect(() => {
     const fetchFaculty = async () => {
       try {
         const res = await axiosInstance.get("http://127.0.0.1:5000/api/auth/faculty");
         if (res.data.status === "success") {
-          // Format all faculty
           const formatted = res.data.data.map((f) => ({
             label: `${f.first_name} ${f.middle_name ? f.middle_name + " " : ""}${f.last_name}`,
             value: f.id,
           }));
-
-          // ✅ Get stored user from localStorage
-          const storedUser = localStorage.getItem("mitportal_user");
-          if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-
-            // ✅ Filter to only include the logged-in instructor
-            const filtered = formatted.filter(
-              (f) => f.label === parsedUser.instructor_name
-            );
-
-            setFacultyList(filtered);
-          } else {
-            // fallback — set full list if no user found
-            setFacultyList(formatted);
-          }
+          setFacultyList(formatted);
         }
       } catch (error) {
         console.error("Error fetching faculty:", error);
@@ -167,7 +137,6 @@ export default function SchedulePage() {
     };
     fetchFaculty();
   }, []);
-
 
   const handleOpenDialog = (schedule = null) => {
 
@@ -271,12 +240,12 @@ const handleSaveSchedule = async () => {
   }
 };
 
+
 const filteredSchedules = schedules.filter(
   (s) =>
     (filterCourse === "All Courses" || s.course === filterCourse) &&
     s.semester === filterSemester &&
     s.schoolYear === filterSchoolYear &&
-    s.instructor === currentStudent.instructor_name &&
     (yearLevelFilter === "All Year Level" || s.yearLevel === yearLevelFilter)
 );
 
@@ -478,6 +447,9 @@ const handlePrint = () => {
                       <IconButton size="small" onClick={() => openEditDialog(row)} title="Edit">
                         <EditIcon />
                       </IconButton>
+                      <IconButton size="small" onClick={() => handleDelete(row)} title="Add Payment">
+                        <Delete/>
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -643,39 +615,6 @@ const handlePrint = () => {
               )}
             />
           </Box>
-          {/* <Box>
-            <Typography variant="h6" gutterBottom>
-              Instructor
-            </Typography>
-            <Autocomplete
-              options={facultyList}
-              value={
-                facultyList.find(
-                  (f) => f.label === currentStudent.instructor_name
-                ) || null
-              }
-              onChange={(e, newValue) =>
-                setNewSchedule({
-                  ...newSchedule,
-                  instructor: newValue ? newValue.value : "",
-                })
-              }
-              getOptionLabel={(option) => option.label || ""}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select Instructor"
-                  fullWidth
-                  value={currentStudent.instructor_name || ""}
-                  InputProps={{
-                    ...params.InputProps,
-                    readOnly: true, // 👈 make it read-only
-                  }}
-                />
-              )}
-            />
-          </Box> */}
-
         </DialogContent>
 
         <DialogActions>

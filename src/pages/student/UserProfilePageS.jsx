@@ -16,13 +16,18 @@ import {
   MenuItem,
   Avatar,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { useDispatch } from "react-redux";
-import { getAllUsers, updateUser } from "../../actions/auth";
+import { getAllUsers, updateUser,updateProfilePicture } from "../../actions/auth";
+import { getAllStudents } from "../../actions/student";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { getAllStudents } from "../../actions/student";
+import ASSETS_URL from "../../API/ASSETS_URL";
 
 export default function UserProfile() {
   const dispatch = useDispatch();
@@ -37,12 +42,15 @@ export default function UserProfile() {
     severity: "success",
   });
 
+  const [openPictureDialog, setOpenPictureDialog] = useState(false);
+  const [newPicture, setNewPicture] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [studentInfo, setStudentInfo] = useState(null);
   const [studentList, setStudentList] = useState([]);
-  const [studentInfo, setStudentInfo] = useState(null); // ✅ Holds current student's info
 
-  const roles = ["registrar", "cashier", "faculty", "admin"];
+  const roles = ["student","registrar", "cashier", "faculty", "admin"];
 
-  // ✅ Fetch current user
+  // ✅ Fetch user info
   const fetchUser = async () => {
     const storedUser = localStorage.getItem("mitportal_user");
     if (!storedUser) return;
@@ -53,7 +61,7 @@ export default function UserProfile() {
     const result = await dispatch(getAllUsers());
     if (result.status === true) {
       const currentUserData = result.data.find(
-        (user) => user.id === parsedUser.user_id
+        (u) => u.id === parsedUser.user_id
       );
       if (currentUserData) {
         setUser(currentUserData);
@@ -64,38 +72,34 @@ export default function UserProfile() {
           username: currentUserData.username || "",
           password: "",
           usertype: currentUserData.usertype || "",
+          profile_pic: currentUserData.profile_pic || "",
         });
       }
     }
   };
 
-  // ✅ Fetch all students and link to current user
+  // ✅ Fetch student info (if linked)
   const fetchApplicant = async () => {
     const result = await dispatch(getAllStudents());
     if (result.status === true) {
-      const names = result.data.map((s) => ({
+      const students = result.data.map((s) => ({
         id: s.id,
-        label: `${s.student_no} | ${s.first_name} ${s.last_name} | ${s.course}`,
         studentNo: s.student_no,
-        lastName: s.last_name,
         firstName: s.first_name,
         middleName: s.middle_name,
-        extName: s.extension_name,
+        lastName: s.last_name,
         gender: s.gender,
         lrn: s.lrn,
         guardianEmail: s.guardian_email,
         studentEmail: s.student_email,
         course: s.course,
       }));
-      setStudentList(names);
+      setStudentList(students);
 
-      // ✅ Match logged-in user with student info
       const storedUser = localStorage.getItem("mitportal_user");
       if (storedUser) {
-        console.log(storedUser)
-        console.log(names)
         const parsedUser = JSON.parse(storedUser);
-        const match = names.find((s) => s.id === parsedUser.userStudentID); // Adjust if student-user link differs
+        const match = students.find((s) => s.id === parsedUser.userStudentID);
         if (match) setStudentInfo(match);
       }
     }
@@ -106,9 +110,8 @@ export default function UserProfile() {
     fetchApplicant();
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleEdit = () => setEditMode(true);
 
@@ -147,7 +150,6 @@ export default function UserProfile() {
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text("User Profile", 14, 20);
-
     const tableColumn = ["Field", "Value"];
     const tableRows = [
       ["Firstname", user.first_name || ""],
@@ -157,7 +159,6 @@ export default function UserProfile() {
       ["Role", user.usertype || ""],
       ["Created At", user.created_at ? new Date(user.created_at).toLocaleString() : ""],
     ];
-
     doc.autoTable({
       head: [tableColumn],
       body: tableRows,
@@ -165,7 +166,7 @@ export default function UserProfile() {
       theme: "grid",
     });
 
-    // ✅ Add student info if available
+    // ✅ Include student info if available
     if (studentInfo) {
       doc.text("Student Information", 14, doc.lastAutoTable.finalY + 15);
       const studentTable = [
@@ -186,6 +187,55 @@ export default function UserProfile() {
     }
 
     doc.save(`User_Profile_${user.username}.pdf`);
+  };
+
+  // ✅ Picture Upload Dialog Handlers
+  const handleOpenPictureDialog = () => setOpenPictureDialog(true);
+  const handleClosePictureDialog = () => {
+    setOpenPictureDialog(false);
+    setPreview(null);
+    setNewPicture(null);
+  };
+
+  const handlePictureUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewPicture(file);
+      const reader = new FileReader();
+      reader.onload = () => setPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePictureSave = async () => {
+    if (!newPicture) {
+      setSnackbar({
+        open: true,
+        message: "Please select an image first!",
+        severity: "warning",
+      });
+      return;
+    }
+
+    const formDataPic = new FormData();
+    formDataPic.append("profilePicture", newPicture);
+    const result = await dispatch(updateProfilePicture(user.id, formDataPic));
+
+    if (result.status === true) {
+      setSnackbar({
+        open: true,
+        message: "Profile picture updated!",
+        severity: "success",
+      });
+      fetchUser();
+      setOpenPictureDialog(false);
+    } else {
+      setSnackbar({
+        open: true,
+        message: "Upload failed: " + result.message,
+        severity: "error",
+      });
+    }
   };
 
   if (!user) return <Typography>Loading user profile...</Typography>;
@@ -209,12 +259,24 @@ export default function UserProfile() {
         }}
       >
         <CardContent>
-          <Box display="flex" justifyContent="center" mb={3}>
-            <Avatar sx={{ width: 100, height: 100, bgcolor: "#3f51b5", fontSize: 40 }}>
-              {user.first_name[0] || "U"}
+          {/* Avatar + Upload */}
+          <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+            <Avatar
+              sx={{ width: 100, height: 100, bgcolor: "#3f51b5", fontSize: 40 }}
+              src={formData.profile_pic ? `${ASSETS_URL}${formData.profile_pic}` : ""}
+            >
+              {user.first_name ? user.first_name[0] : "U"}
             </Avatar>
+            <Button
+              variant="outlined"
+              sx={{ mt: 2, textTransform: "none" }}
+              onClick={handleOpenPictureDialog}
+            >
+              Change Profile Picture
+            </Button>
           </Box>
 
+          {/* User Fields */}
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -248,12 +310,12 @@ export default function UserProfile() {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Username"
+                label="Email"
                 name="username"
                 fullWidth
                 value={formData.username}
                 onChange={handleChange}
-                disabled={!editMode}
+                disabled={true}
               />
             </Grid>
             {editMode && (
@@ -269,25 +331,9 @@ export default function UserProfile() {
                 />
               </Grid>
             )}
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  name="usertype"
-                  value={formData.usertype}
-                  onChange={handleChange}
-                  disabled={!editMode}
-                >
-                  {roles.map((role, idx) => (
-                    <MenuItem key={idx} value={role}>
-                      {role}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
           </Grid>
 
+          {/* Buttons */}
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
@@ -313,10 +359,6 @@ export default function UserProfile() {
                 Edit Profile
               </Button>
             )}
-
-            <Button variant="outlined" onClick={handlePrint}>
-              Print Profile
-            </Button>
           </Stack>
         </CardContent>
       </Card>
@@ -344,70 +386,19 @@ export default function UserProfile() {
             Student Information
           </Typography>
 
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              p: 2,
-              bgcolor: "#f9fafc",
-              borderRadius: 2,
-            }}
-          >
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight="bold">Student No:</Typography>
-              <Typography>{studentInfo.studentNo}</Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight="bold">LRN:</Typography>
-              <Typography>{studentInfo.lrn || "N/A"}</Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight="bold">Full Name:</Typography>
-              <Typography>
-                {`${studentInfo.firstName} ${studentInfo.middleName || ""} ${studentInfo.lastName}`}
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight="bold">Gender:</Typography>
-              <Typography>{studentInfo.gender}</Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight="bold">Course:</Typography>
-              <Typography>{studentInfo.course}</Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight="bold">Guardian Email:</Typography>
-              <Typography>{studentInfo.guardianEmail}</Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight="bold">Student Email:</Typography>
-              <Typography>{studentInfo.studentEmail}</Typography>
-            </Box>
-          </Box>
-
-          {/* Optional decorative footer */}
-          <Box
-            sx={{
-              mt: 3,
-              textAlign: "center",
-              fontStyle: "italic",
-              color: "text.secondary",
-              fontSize: 14,
-            }}
-          >
-            “All information above is verified by the system.”
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 2, bgcolor: "#f9fafc", borderRadius: 2 }}>
+            <Typography><b>Student No:</b> {studentInfo.studentNo}</Typography>
+            <Typography><b>LRN:</b> {studentInfo.lrn || "N/A"}</Typography>
+            <Typography><b>Full Name:</b> {`${studentInfo.firstName} ${studentInfo.middleName || ""} ${studentInfo.lastName}`}</Typography>
+            <Typography><b>Gender:</b> {studentInfo.gender}</Typography>
+            <Typography><b>Course:</b> {studentInfo.course}</Typography>
+            <Typography><b>Guardian Email:</b> {studentInfo.guardianEmail}</Typography>
+            <Typography><b>Student Email:</b> {studentInfo.studentEmail}</Typography>
           </Box>
         </Card>
       )}
 
-
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -422,6 +413,28 @@ export default function UserProfile() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Change Profile Picture Dialog */}
+      <Dialog open={openPictureDialog} onClose={handleClosePictureDialog} fullWidth maxWidth="xs">
+        <DialogTitle>Change Profile Picture</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, mt: 2 }}>
+            <Avatar src={preview || `${ASSETS_URL}${formData.profile_pic}`} sx={{ width: 150, height: 150 }} />
+            <Button variant="outlined" component="label">
+              Upload New Picture
+              <input type="file" accept="image/*" hidden onChange={handlePictureUpload} />
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePictureDialog} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handlePictureSave} color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
