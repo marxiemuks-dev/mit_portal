@@ -31,12 +31,15 @@ import { useDispatch } from "react-redux";
 import { addSchedule, getAllSchedule } from "../../actions/schedule";
 // mock data for courses, semesters, etc.
   const courses = [
-    'Bachelor of Science in Elementary Education',
-    'Bachelor of Science in Criminology',
-    'Bachelor of Science in Engineering',
-    'Bachelor of Science in Information Technology',
-    'Bachelor of Science in Nursing',
-    'HRM (Hotel and Restaurant Management)'
+    "Bachelor of Science in Business Administration",
+    "Bachelor of Science in Criminology",
+    "Bachelor of Science in Elementary Education",
+    "Bachelor of Science in Civil Engineering",
+    "Bachelor of Science in Electrical Engineering",
+    "Bachelor of Science in Information Technology",
+    "Bachelor of Science in Nursing",
+    "Bachelor of Science in Social Work",
+    "HRM (Hotel and Restaurant Management)"
   ];
 
 const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];

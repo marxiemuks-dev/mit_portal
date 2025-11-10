@@ -77,7 +77,7 @@ export default function NotificationsPage() {
           );
   
           console.log("Filtered Announcements:", filtered);
-          setNotifications(filtered);
+          setNotifications(result.data);
         }
       } catch (err) {
         console.error("Error fetching events:", err);
@@ -336,7 +336,7 @@ export default function NotificationsPage() {
               value={editFormData.target_type}
               onChange={(e) => handleChange(e, true)}
             >
-              {["ALL", "USER", "FACULTY", "STUDENT"].map((type) => (
+              {["ALL", "FACULTY", "STUDENT", "ADMIN", "REGISTRAR", "CASHIER"].map((type) => (
                 <MenuItem key={type} value={type}>
                   {type}
                 </MenuItem>

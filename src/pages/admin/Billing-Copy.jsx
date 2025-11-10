@@ -172,8 +172,6 @@ export default function BillingPage() {
       try {
         const result = await dispatch(getAllBilling());
         if (result.status === true) {
-          console.log(result.data)
-
           const formattedBillingData = result.data.map((item) => {
             // ✅ Compute payment summary
             const payments = item.payments || item.payment || [];
@@ -252,7 +250,6 @@ export default function BillingPage() {
             if (lastA === lastB) return firstA.localeCompare(firstB);
             return lastA.localeCompare(lastB);
           });
-          console.log(sortedBillingData)
 
           setBillingRecords(sortedBillingData);
         } else {
@@ -300,6 +297,7 @@ export default function BillingPage() {
 
   const handleFormChange = async (field, value) => {
     // Helper: calculate discount and update form fields
+    let siblings = 1
     const applyScholarshipDiscount = (prev) => {
       let tuitionFee = parseFloat(prev.tuitionFee) || 0;
       let totalMisc = parseFloat(prev.totalMisc) || 0;
@@ -312,8 +310,7 @@ export default function BillingPage() {
       }else{
         setSiblingsOpenDiaglog(false)
       }
-
-      let siblings = parseInt(siblingsCount || 1);
+      console.log("Siblings Count", siblings)
       switch (prev.scholarshipStatus) {
         case "Academic Scholarship":
           // 30% off tuition
@@ -321,10 +318,14 @@ export default function BillingPage() {
           fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
           totalBill = fullPayment;
           break;
-
         case "Brother & Sister":
           // you can adjust this dynamically (2, 3, or 4 siblings)
           // for now we’ll assume user provides siblingCount somewhere
+          if(siblings === 1){
+          discountAmount = tuitionFee * 0.3;
+          fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+          totalBill = fullPayment; 
+          }
           if (siblings === 2) discountAmount = tuitionFee * 0.25;
           else if (siblings === 3) discountAmount = tuitionFee * 0.5;
           else if (siblings === 4) discountAmount = tuitionFee * 0.75;
@@ -373,7 +374,8 @@ export default function BillingPage() {
     };
     if (field === "siblingsCount") {
         setSiblingsCount(value)
-        console.log(value)
+        siblings = parseInt(value)
+        console.log("Set Siblings Count", value)
     }
     // 👇 field handling logic
     if (field === "student") {
@@ -382,7 +384,6 @@ export default function BillingPage() {
         const result = await dispatch(getBillingByStudentId(value.id));
         if (result.status === true) {
           setFormData((prev) => ({ ...prev, prevBalance: result.data?.totalCurrentBill?.toFixed(2) || 0 }));
-          console.log(result)
         } else {
           setFormData((prev) => ({ ...prev, prevBalance: 0 }));
         }
@@ -444,6 +445,11 @@ const handleFormChangeEdit = async(field, value) => {
       case "Brother & Sister":
         // you can adjust this dynamically (2, 3, or 4 siblings)
         // for now we’ll assume user provides siblingCount somewhere
+        if(siblings === 1){
+          discountAmount = tuitionFee * 0.3;
+          fullPayment = tuitionFee - discountAmount + totalMisc + prevBalance;
+          totalBill = fullPayment; 
+        }
         if (siblings === 2) discountAmount = tuitionFee * 0.25;
         else if (siblings === 3) discountAmount = tuitionFee * 0.5;
         else if (siblings === 4) discountAmount = tuitionFee * 0.75;

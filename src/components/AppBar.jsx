@@ -82,7 +82,7 @@ function ResponsiveAppBar() {
     else if(user?.role === 'student'){
       pages = [
         {id:1, pageName: "Dashboard", link: "" },
-        {id:2, pageName: "Enrollment", link: "enrollment" },
+        {id:2, pageName: "Enrolled", link: "enrollment" },
         {id:3, pageName: "Schedule", link: "schedule" },
         {id:4, pageName: "Grades", link: "grades" },
         {id:5, pageName: "Billing", link: "billing" },
@@ -125,7 +125,7 @@ function ResponsiveAppBar() {
         <Toolbar disableGutters>
           <Box sx={{display: { xs: 'none', md: 'flex', sm:'none' },}}>
             <img
-              src="/logo.png" // Update this path to your image
+              src="/MIT_logo.png" // Update this path to your image
               alt="logo"
               style={{
                 display: { xs: 'none', md: 'flex', sm:'none' },

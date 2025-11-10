@@ -62,9 +62,33 @@ return (
       alignItems: "center",
     }}
   >
+    {currentStudent.length > 0 && (
+      <Box
+            sx={{
+              display:'flex',
+              justifyContent:'start'
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+                color: "primary.main",
+                fontWeight: "bold",
+                textAlign: "left",
+              }}
+            >
+              Welcome
+              {", "}
+              {currentStudent[0].students.last_name?.toUpperCase()}, {currentStudent[0].students.first_name}{" "}
+              {currentStudent[0].students.middle_name} ({currentStudent[0].students.student_no})
+            </Typography>
+          </Box>
+    )}
     {currentStudent.map((enrollment) => {
       const student = enrollment.students;
       return (
+        <Box>
         <Card
           key={enrollment.id}
           sx={{
@@ -76,7 +100,7 @@ return (
           }}
         >
           <CardContent>
-            <Typography
+            {/* <Typography
               variant="h6"
               sx={{
                 mb: 2,
@@ -87,7 +111,7 @@ return (
             >
               {student.last_name?.toUpperCase()}, {student.first_name}{" "}
               {student.middle_name} ({student.student_no})
-            </Typography>
+            </Typography> */}
 
             <Box
               sx={{
@@ -97,6 +121,24 @@ return (
                 gap: 2,
               }}
             >
+              <Box sx={{ flex: "1 1 45%" }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Student Name
+                </Typography>
+                <Typography fontWeight={600}>
+                  {student.last_name?.toUpperCase()},{" "}
+                  {student.first_name?.toUpperCase()}{" "}
+                  {student.middle_name?.toUpperCase()}
+                </Typography>
+              </Box>
+              <Box sx={{ flex: "1 1 45%" }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Student Number
+                </Typography>
+                <Typography fontWeight={600}>
+                  {student.student_no}
+                </Typography>
+              </Box>
               <Box sx={{ flex: "1 1 45%" }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Program
@@ -150,6 +192,7 @@ return (
             </Box>
           </CardContent>
         </Card>
+        </Box>
       );
     })}
   </Box>

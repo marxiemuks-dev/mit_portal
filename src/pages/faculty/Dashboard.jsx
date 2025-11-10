@@ -4,6 +4,11 @@ import {
   Box,
   Card,
   CardContent,
+  Divider,
+  ListItem,
+  ListItemText,
+  List,
+  Paper,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import TodayIcon from "@mui/icons-material/Today";
@@ -15,6 +20,7 @@ import SchoolCalendar from "../../components/SchoolCalendar";
 import { getAllStudents } from "../../actions/student";
 import { getNotifications } from "../../actions/notification";
 import { getAnnouncements } from "../../actions/announcement";
+import ASSETS_URL from "../../API/ASSETS_URL";
 
 const stats = [
   { title: "Payments Processed", value: "₱ 12,500", icon: <PaymentIcon fontSize="large" color="primary" /> },
@@ -38,8 +44,8 @@ export default function Dashboard() {
           if (result?.data) {
             const filtered = result.data.filter(
               (item) =>
-                item.visibility === "ALL" ||
-                item.visibility === "FACULTY"
+                (item.visibility === "ALL" || item.visibility === "FACULTY") &&
+                item.photo_url !== null
             );
     
             console.log("Filtered Announcements:", filtered);
@@ -148,13 +154,156 @@ export default function Dashboard() {
           gap: 2,
         }}
       >
-        {/* Calendar */}
-        <Box sx={{ flex: 2 }}>
-          <Card sx={{ borderRadius: 3, boxShadow: "0 6px 20px rgba(0,0,0,0.08)", height: "100%" }}>
-            <CardContent>
-              <SchoolCalendar calendarData={events} />
-            </CardContent>
-          </Card>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 2,
+          }}
+        >
+          {/* 🟢 Announcements Section */}
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 1,
+                fontWeight: "bold",
+                color: "primary.main",
+                textAlign: "center",
+              }}
+            >
+              📢 Announcements
+            </Typography>
+            <Paper elevation={3} sx={{ borderRadius: 2, overflow: "hidden" }}>
+              <List>
+                {announcements?.filter(a => a.type === "Announcement").length === 0 && (
+                  <ListItem>
+                    <ListItemText primary="No announcements found." />
+                  </ListItem>
+                )}
+
+                {announcements
+                  ?.filter(a => a.type === "Announcement")
+                  .map((a) => (
+                    <React.Fragment key={a.id}>
+                      <ListItem
+                        sx={{
+                          backgroundColor: a.isRead ? "#fff" : "#e3f2fd",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          px: 2,
+                          py: 1.5,
+                          "&:hover": { bgcolor: "#f9f9f9" },
+                        }}
+                      >
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {a.title}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 0.5 }}>
+                          {a.description}
+                        </Typography>
+
+                        {a.photo_url && (
+                          <Box
+                            mt={1.5}
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              width: "100%",
+                            }}
+                          >
+                            <img
+                              src={`${ASSETS_URL}${a.photo_url}`}
+                              alt="Announcement"
+                              style={{
+                                width: "100%",
+                                maxWidth: "350px",
+                                height: "200px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                              }}
+                            />
+                          </Box>
+                        )}
+                      </ListItem>
+                      <Divider />
+                    </React.Fragment>
+                  ))}
+              </List>
+            </Paper>
+          </Box>
+
+          {/* 🔵 Activities Section */}
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 1,
+                fontWeight: "bold",
+                color: "secondary.main",
+                textAlign: "center",
+              }}
+            >
+              🎯 Activities
+            </Typography>
+            <Paper elevation={3} sx={{ borderRadius: 2, overflow: "hidden" }}>
+              <List>
+                {announcements?.filter(a => a.type === "Activity").length === 0 && (
+                  <ListItem>
+                    <ListItemText primary="No activities found." />
+                  </ListItem>
+                )}
+
+                {announcements
+                  ?.filter(a => a.type === "Activity")
+                  .map((a) => (
+                    <React.Fragment key={a.id}>
+                      <ListItem
+                        sx={{
+                          backgroundColor: a.isRead ? "#fff" : "#e8f5e9",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          px: 2,
+                          py: 1.5,
+                          "&:hover": { bgcolor: "#f1f8e9" },
+                        }}
+                      >
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {a.title}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 0.5 }}>
+                          {a.description}
+                        </Typography>
+
+                        {a.photo_url && (
+                          <Box
+                            mt={1.5}
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              width: "100%",
+                            }}
+                          >
+                            <img
+                              src={`${ASSETS_URL}${a.photo_url}`}
+                              alt="Activity"
+                              style={{
+                                width: "100%",
+                                maxWidth: "350px",
+                                height: "200px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                              }}
+                            />
+                          </Box>
+                        )}
+                      </ListItem>
+                      <Divider />
+                    </React.Fragment>
+                  ))}
+              </List>
+            </Paper>
+          </Box>
         </Box>
       </Box>
     </Box>

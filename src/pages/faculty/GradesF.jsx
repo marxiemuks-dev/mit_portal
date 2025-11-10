@@ -223,36 +223,139 @@ export default function Grades() {
       fetchSchedule()
   }, [loading]);
 
-  const computeFinalGrade = (student) => {
-    return ((student.premid + student.midterm + student.prefinal + student.finalterm) / 4).toFixed(2);
-  };
+  // const computeFinalGrade = (student) => {
+  //       const { premid, midterm, prefinal, finalterm } = student;
 
-  const getRemarks = (student) => {
-    // Check for any blank/undefined grades
-    const { premid, midterm, prefinal, finalterm } = student;
+  //   if(
+  //       premid === null ||
+  //       midterm === null ||
+  //       prefinal === null ||
+  //       finalterm === null ||
+  //       premid === 0 ||
+  //       midterm === 0 ||
+  //       prefinal === 0 ||
+  //       finalterm === 0
+  //   ){
+  //     return " "
+  //   }
+  //   else{
+  //      return ((student.premid + student.midterm + student.prefinal + student.finalterm) / 4).toFixed(2);
+  //   }
+  // };
+  const computeFinalGrade = (student, subject) => {
+  const { premid, midterm, prefinal, finalterm } = student;
+
+  // Handle Summer subjects (only Midterm + Finalterm)
+  if (student?.schedule.semester === "Summer") {
     if (
-      premid === null ||
       midterm === null ||
-      prefinal === null ||
       finalterm === null ||
-      premid === 0 ||
       midterm === 0 ||
-      prefinal === 0 ||
+      finalterm === 0
+    ) {
+      return " ";
+    } else {
+      return ((Number(midterm) + Number(finalterm)) / 2).toFixed(2);
+    }
+  }
+
+  // Handle Regular Semesters
+  if (
+    premid === null ||
+    midterm === null ||
+    prefinal === null ||
+    finalterm === null ||
+    premid === 0 ||
+    midterm === 0 ||
+    prefinal === 0 ||
+    finalterm === 0
+  ) {
+    return " ";
+  } else {
+    return (
+      (Number(premid) + Number(midterm) + Number(prefinal) + Number(finalterm)) /
+      4
+    ).toFixed(2);
+  }
+};
+
+  const [isIncomplete, seIsIncomplete] = useState(false)
+
+  // const getRemarks = (student) => {
+  //   const { premid, midterm, prefinal, finalterm } = student;
+  //   console.log(student)
+  //   if (
+  //     premid === null ||
+  //     midterm === null ||
+  //     prefinal === null ||
+  //     finalterm === null ||
+  //     premid === 0 ||
+  //     midterm === 0 ||
+  //     prefinal === 0 ||
+  //     finalterm === 0
+  //   ) {
+  //     return "Incomplete";
+  //   }
+
+  //   const avg = parseFloat(computeFinalGrade(student));
+  //   if (avg >= 1.0 && avg <= 1.25) return "Excellent";
+  //   if (avg >= 1.26 && avg <= 1.99) return "Very Good";
+  //   if (avg >= 2.0 && avg <= 2.49) return "Good";
+  //   if (avg >= 2.50 && avg <= 2.99) return "Satisfactory";
+  //   if (avg === 3.00) return "Passing";
+  //   if (avg >= 3.1  && avg <= 5.0) return "Failure";
+
+  //   return ""; // fallback
+  // };
+const getRemarks = (student, subject) => {
+  const { premid, midterm, prefinal, finalterm } = student;
+
+  console.log(student.schedule)
+  // Summer subjects (only Midterm + Finalterm)
+  if (student?.schedule.semester === "Summer") {
+    if (
+      midterm === null ||
+      finalterm === null ||
+      midterm === 0 ||
       finalterm === 0
     ) {
       return "Incomplete";
     }
 
-    const avg = parseFloat(computeFinalGrade(student));
+    const avg = parseFloat(computeFinalGrade(student, subject));
     if (avg >= 1.0 && avg <= 1.25) return "Excellent";
-    if (avg > 1.26 && avg <= 1.99) return "Very Good";
-    if (avg > 2.0 && avg <= 2.49) return "Good";
-    if (avg > 2.50 && avg <= 2.99) return "Satisfactory";
-    if (avg === 3.00) return "Passing";
-    if (avg >= 3.1  && avg <= 5.0) return "Failure";
+    if (avg >= 1.26 && avg <= 1.99) return "Very Good";
+    if (avg >= 2.0 && avg <= 2.49) return "Good";
+    if (avg >= 2.5 && avg <= 2.99) return "Satisfactory";
+    if (avg === 3.0) return "Passing";
+    if (avg >= 3.1 && avg <= 5.0) return "Failure";
+    return "";
+  }
 
-    return ""; // fallback
-  };
+  // Regular Semesters
+  if (
+    premid === null ||
+    midterm === null ||
+    prefinal === null ||
+    finalterm === null ||
+    premid === 0 ||
+    midterm === 0 ||
+    prefinal === 0 ||
+    finalterm === 0
+  ) {
+    return "Incomplete";
+  }
+
+  const avg = parseFloat(computeFinalGrade(student, subject));
+  if (avg >= 1.0 && avg <= 1.25) return "Excellent";
+  if (avg >= 1.26 && avg <= 1.99) return "Very Good";
+  if (avg >= 2.0 && avg <= 2.49) return "Good";
+  if (avg >= 2.5 && avg <= 2.99) return "Satisfactory";
+  if (avg === 3.0) return "Passing";
+  if (avg >= 3.1 && avg <= 5.0) return "Failure";
+  return "";
+};
+
 
   return (
     <Box sx={{ p: 3, bgcolor: "#f4f6f8", minHeight: "100vh" }}>
@@ -367,6 +470,115 @@ export default function Grades() {
               Teacher: {selectedSubject.instructor}
             </Typography>
             <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
+  <Table>
+    <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+      <TableRow>
+        <TableCell>#</TableCell>
+        <TableCell>Student No</TableCell>
+        <TableCell>Student Name</TableCell>
+
+        {/* ✅ Conditional columns */}
+        {filterSemester !== "Summer" && <TableCell>Pre-Mid</TableCell>}
+        <TableCell>Midterm</TableCell>
+        {filterSemester !== "Summer" && <TableCell>Pre-Final</TableCell>}
+        <TableCell>Final-Term</TableCell>
+
+        <TableCell>Final Grade</TableCell>
+        <TableCell>Remarks</TableCell>
+        <TableCell>Action</TableCell>
+      </TableRow>
+    </TableHead>
+
+    <TableBody>
+      {enrolledStudent.map((student, index) => (
+        <TableRow key={student.id}>
+          <TableCell>{index + 1}</TableCell>
+          <TableCell>{student.student_no}</TableCell>
+          <TableCell>{student.student_name}</TableCell>
+
+          {/* ✅ Show Pre-Mid only if not Summer */}
+          {filterSemester !== "Summer" && (
+            <TableCell>
+              <TextField
+                disabled
+                type="number"
+                size="small"
+                value={student.premid}
+                onChange={(e) =>
+                  handleGradeChange(student.id, "premid", e.target.value)
+                }
+                sx={{ width: 80 }}
+              />
+            </TableCell>
+          )}
+
+          {/* ✅ Always show Midterm */}
+          <TableCell>
+            <TextField
+              disabled
+              type="number"
+              size="small"
+              value={student.midterm}
+              onChange={(e) =>
+                handleGradeChange(student.id, "midterm", e.target.value)
+              }
+              sx={{ width: 80 }}
+            />
+          </TableCell>
+
+          {/* ✅ Show Pre-Final only if not Summer */}
+          {filterSemester !== "Summer" && (
+            <TableCell>
+              <TextField
+                disabled
+                type="number"
+                size="small"
+                value={student.prefinal}
+                onChange={(e) =>
+                  handleGradeChange(student.id, "prefinal", e.target.value)
+                }
+                sx={{ width: 80 }}
+              />
+            </TableCell>
+          )}
+
+          {/* ✅ Always show Final-Term */}
+          <TableCell>
+            <TextField
+              disabled
+              type="number"
+              size="small"
+              value={student.finalterm}
+              onChange={(e) =>
+                handleGradeChange(student.id, "finalterm", e.target.value)
+              }
+              sx={{ width: 80 }}
+            />
+          </TableCell>
+          {/* <TableCell>{computeFinalGrade(student)}</TableCell> */}
+          {!isIncomplete && (
+            <TableCell>{computeFinalGrade(student)}</TableCell>
+          )}
+          <TableCell>{getRemarks(student)}</TableCell>
+          <TableCell>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setSelectedGrade(student);
+                setOpenEditDialog(true);
+              }}
+            >
+              Edit
+            </Button>
+          </TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+</TableContainer>
+
+            {/* <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2 }}>
               <Table>
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
                   <TableRow>
@@ -378,7 +590,7 @@ export default function Grades() {
                     <TableCell>Pre-Final</TableCell>
                     <TableCell>Final-Term</TableCell>
                     <TableCell>Average</TableCell>
-                    <TableCell>Remarks</TableCell> {/* ✅ Added */}
+                    <TableCell>Remarks</TableCell>
                     <TableCell>Action</TableCell>
                   </TableRow>
                 </TableHead>
@@ -437,7 +649,7 @@ export default function Grades() {
                           />
                         </TableCell>
                         <TableCell>{computeFinalGrade(student)}</TableCell>
-                        <TableCell>{getRemarks(student)}</TableCell> {/* ✅ Added */}
+                        <TableCell>{getRemarks(student)}</TableCell>
                         <TableCell>
                           <Button
                             variant="contained"
@@ -454,7 +666,7 @@ export default function Grades() {
                     ))}
                   </TableBody>
                 </Table>
-              </TableContainer>
+            </TableContainer> */}
             <Dialog
               open={openEditDialog}
               onClose={() => setOpenEditDialog(false)}
@@ -468,7 +680,12 @@ export default function Grades() {
                     <Typography variant="subtitle1" gutterBottom>
                       {selectedGrade.student_name} ({selectedGrade.student_no})
                     </Typography>
-                    <TextField
+                    {
+                      console.log(selectedSubject.semester)
+                    }
+                    {
+                      selectedSubject?.semester !== "Summer" && (
+                                            <TextField
                       margin="normal"
                       label="Pre-Mid"
                       type="number"
@@ -478,6 +695,8 @@ export default function Grades() {
                         setSelectedGrade({ ...selectedGrade, premid: e.target.value })
                       }
                     />
+                      )
+                    }
                     <TextField
                       margin="normal"
                       label="Mid-Term"
@@ -488,7 +707,9 @@ export default function Grades() {
                         setSelectedGrade({ ...selectedGrade, midterm: e.target.value })
                       }
                     />
-                    <TextField
+                    {
+                      selectedSubject?.semester !== "Summer" && (
+                                            <TextField
                       margin="normal"
                       label="Pre-Final"
                       type="number"
@@ -498,6 +719,8 @@ export default function Grades() {
                         setSelectedGrade({ ...selectedGrade, prefinal: e.target.value })
                       }
                     />
+                      )
+                    }
                     <TextField
                       margin="normal"
                       label="Final-Term"
@@ -571,9 +794,9 @@ export default function Grades() {
                 Total Students:
                 <strong>{enrolledStudent.length}</strong>
               </Typography>
-              <Button variant="contained" color="primary" onClick={handlePrint}>
+              {/* <Button variant="contained" color="primary" onClick={handlePrint}>
                 Print Grades
-              </Button>
+              </Button> */}
             </Box>
           </CardContent>
         </Card>

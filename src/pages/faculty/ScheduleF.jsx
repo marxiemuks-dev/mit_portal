@@ -43,7 +43,8 @@ import { useNavigate } from 'react-router-dom';
     "Bachelor of Science in Business Administration",
     "Bachelor of Science in Criminology",
     "Bachelor of Science in Elementary Education",
-    "Bachelor of Science in Engineering",
+    "Bachelor of Science in Civil Engineering",
+    "Bachelor of Science in Electrical Engineering",
     "Bachelor of Science in Information Technology",
     "Bachelor of Science in Nursing",
     "Bachelor of Science in Social Work",
@@ -495,14 +496,14 @@ const handlePrint = () => {
           </TableContainer>
         </CardContent>
       </Card>
-        <Button
+        {/* <Button
           variant="outlined"
           color="secondary"
           sx={{ mb: 2, mt:2}}
           onClick={() => handlePrint()}
         >
           🖨️ Print Schedule
-        </Button>
+        </Button> */}
 
 
       {/* Dialog */}

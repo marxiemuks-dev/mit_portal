@@ -250,7 +250,7 @@ export default function UserProfile() {
                 fullWidth
                 value={formData.username}
                 onChange={handleChange}
-                disabled={!editMode}
+                disabled={true}
               />
             </Grid>
             {editMode && (
@@ -311,9 +311,9 @@ export default function UserProfile() {
                 Edit Profile
               </Button>
             )}
-            <Button variant="outlined" onClick={handlePrint}>
+            {/* <Button variant="outlined" onClick={handlePrint}>
               Print Profile
-            </Button>
+            </Button> */}
           </Stack>
         </CardContent>
       </Card>

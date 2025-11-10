@@ -110,8 +110,7 @@ const SchoolCalendarPage = () => {
         !formData.title ||
         !formData.description ||
         !formData.event_type ||
-        !formData.start_date ||
-        !formData.end_date
+        !formData.start_date
       ) {
         setSnackbar({
           open: true,
@@ -253,9 +252,11 @@ const SchoolCalendarPage = () => {
                   Add Event
                 </Button>
               </Box>
-
+              <SchoolCalendar
+                calendarData ={events}
+              />
               {/* Event Table */}
-              <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "none" }}>
+              {/* <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "none" }}>
                 <Table size="small">
                   <TableHead sx={{ bgcolor: "#f5f5f5" }}>
                     <TableRow>
@@ -314,13 +315,13 @@ const SchoolCalendarPage = () => {
                     )}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </TableContainer> */}
             </CardContent>
           </Card>
         </Box>
 
         {/* RIGHT SECTION */}
-        <Box sx={{ flex: 1 }}>
+        {/* <Box sx={{ flex: 1 }}>
           <Card sx={{ borderRadius: 3, boxShadow: "0 6px 20px rgba(0,0,0,0.08)", height: "100%" }}>
             <CardContent>
               <SchoolCalendar
@@ -328,7 +329,7 @@ const SchoolCalendarPage = () => {
               />
             </CardContent>
           </Card>
-        </Box>
+        </Box> */}
       </Box>
 
       {/* ➕ Dialog */}
@@ -344,7 +345,7 @@ const SchoolCalendarPage = () => {
               ))}
             </TextField>
             <TextField label="Start Date" name="start_date" type="date" value={formData.start_date} onChange={handleChange} InputLabelProps={{ shrink: true }} />
-            <TextField label="End Date" name="end_date" type="date" value={formData.end_date} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+            {/* <TextField label="End Date" name="end_date" type="date" value={formData.end_date} onChange={handleChange} InputLabelProps={{ shrink: true }} /> */}
             <TextField select label="Semester" name="semester" value={formData.semester} onChange={handleChange} fullWidth>
               {semesters.map((s) => (<MenuItem key={s} value={s}>{s}</MenuItem>))}
             </TextField>

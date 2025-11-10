@@ -66,6 +66,63 @@ export default function RegistrationForm ({setOpenRegister}){
   });
 
   const handleInputChange = (field, value) => {
+    if(field === "course"){
+      if(value === "Bachelor of Science in Business Administration"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSBA-"
+        }))
+      }
+      else if(value === "Bachelor of Science in Criminology"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSC-"
+        }))
+      }
+      else if(value === "Bachelor of Science in Elementary Education"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BEED-"
+        }))
+      }
+      else if(value === "Bachelor of Science in Civil Engineering"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSCE-"
+        }))
+      }
+      else if(value === "Bachelor of Science in Electrical Engineering"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSEE-"
+        }))
+      }
+      else if(value === "Bachelor of Science in Information Technology"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSIT-"
+        }))
+      }
+      else if(value === "Bachelor of Science in Nursing"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSN-"
+        }))
+      }
+      else if(value === "Bachelor of Science in Social Work"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSSW-"
+        }))
+      }
+      else if(value === "HRM (Hotel and Restaurant Management)"){
+        setFormData(prev =>({
+          ...prev,
+          ['student_no']: "BSHRM-"
+        }))
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -117,7 +174,8 @@ const dispatch = useDispatch();
     "Bachelor of Science in Business Administration",
     "Bachelor of Science in Criminology",
     "Bachelor of Science in Elementary Education",
-    "Bachelor of Science in Engineering",
+    "Bachelor of Science in Civil Engineering",
+    "Bachelor of Science in Electrical Engineering",
     "Bachelor of Science in Information Technology",
     "Bachelor of Science in Nursing",
     "Bachelor of Science in Social Work",
@@ -234,7 +292,7 @@ const scholarshipOptions = ['None', 'Academic Scholarship','Brother & Sister','H
               
               <Grid item xs={12} sm={4}>
                 <FormControl fullWidth size="small" required>
-                  <InputLabel id="gender-label">Gender</InputLabel>
+                  <InputLabel id="gender-label">Sex</InputLabel>
                   <Select
                     sx={{minWidth:'200px'}}
                     labelId="gender-label"
@@ -245,7 +303,6 @@ const scholarshipOptions = ['None', 'Academic Scholarship','Brother & Sister','H
                   >
                     <MenuItem value="Male">Male</MenuItem>
                     <MenuItem value="Female">Female</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>

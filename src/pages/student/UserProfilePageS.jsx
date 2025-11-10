@@ -331,6 +331,23 @@ export default function UserProfile() {
                 />
               </Grid>
             )}
+            <Grid item xs={12}>
+                          <FormControl fullWidth>
+                            <InputLabel>Role</InputLabel>
+                            <Select
+                              name="usertype"
+                              value={formData.usertype}
+                              onChange={handleChange}
+                              disabled={true}
+                            >
+                              {roles.map((role, idx) => (
+                                <MenuItem key={idx} value={role}>
+                                  {role}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
           </Grid>
 
           {/* Buttons */}

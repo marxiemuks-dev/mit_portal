@@ -25,7 +25,7 @@ import { addPayment } from "../actions/billing";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-const AddPaymentDialog = ({ open, onClose, billingData }) => {
+const AddPaymentDialogS = ({ open, onClose, billingData }) => {
 
   const dispatch = useDispatch();
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
@@ -198,7 +198,7 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
         </Box>
 
         {/* Add Payment Form */}
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+        {/* <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <TextField
             label="Payment Amount"
             type="number"
@@ -226,7 +226,7 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
           <Button variant="contained" color="primary" onClick={handleAddPayment}>
             Add
           </Button>
-        </Box>
+        </Box> */}
         {/* Payment Record Table */}
         <Paper variant="outlined">
           <Table size="small">
@@ -261,7 +261,7 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
       </DialogContent>
 
       <DialogActions sx={{ p: 2 }}>
-        <Button
+        {/* <Button
           onClick={handleDownloadPDF}
           color="secondary"
           variant="outlined"
@@ -273,10 +273,10 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
         </Button>
         <Button onClick={handleAddPayment} color="primary" variant="contained">
           {formLoading ? <CircularProgress size={20} /> : "Save Payment"}
-        </Button>
+        </Button> */}
       </DialogActions>
     </Dialog>
   );
 };
 
-export default AddPaymentDialog;
+export default AddPaymentDialogS;

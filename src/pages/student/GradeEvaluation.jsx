@@ -38,44 +38,90 @@ const GradeEvaluation = () => {
 
   // ✅ Compute Final Grade
   const computeFinalGrade = (subject) => {
-    const { premid, midterm, prefinal, finalterm } = subject;
-    const grades = [premid, midterm, prefinal, finalterm].filter(
-      (g) => g !== null && g !== undefined && g !== 0
-    );
-    if (grades.length === 0) return null;
-    const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
-    return avg.toFixed(2);
-  };
+  const { premid, midterm, prefinal, finalterm } = subject;
+
+  // Handle Summer subjects (only Midterm + Finalterm)
+  if (subject.semester === "Summer") {
+    if (
+      midterm === null ||
+      finalterm === null ||
+      midterm === 0 ||
+      finalterm === 0
+    ) {
+      return " ";
+    } else {
+      return ((Number(midterm) + Number(finalterm)) / 2).toFixed(2);
+    }
+  }
+
+  // Handle Regular Semesters
+  if (
+    premid === null ||
+    midterm === null ||
+    prefinal === null ||
+    finalterm === null ||
+    premid === 0 ||
+    midterm === 0 ||
+    prefinal === 0 ||
+    finalterm === 0
+  ) {
+    return " ";
+  } else {
+    return (
+      (Number(premid) + Number(midterm) + Number(prefinal) + Number(finalterm)) /
+      4
+    ).toFixed(2);
+  }
+};
 
   // ✅ Get Remarks (your logic)
-  const getRemarks = (subject) => {
-    const { premid, midterm, prefinal, finalterm } = subject;
+const getRemarks = (subject) => {
+  const { premid, midterm, prefinal, finalterm } = subject;
 
-    // Check for incomplete or zero grades
+  // Summer subjects (only Midterm + Finalterm)
+  if (subject?.semester === "Summer") {
     if (
-      premid === null ||
       midterm === null ||
-      prefinal === null ||
       finalterm === null ||
-      premid === 0 ||
       midterm === 0 ||
-      prefinal === 0 ||
       finalterm === 0
     ) {
       return "Incomplete";
     }
 
     const avg = parseFloat(computeFinalGrade(subject));
-
     if (avg >= 1.0 && avg <= 1.25) return "Excellent";
-    if (avg > 1.26 && avg <= 1.99) return "Very Good";
-    if (avg > 2.0 && avg <= 2.49) return "Good";
-    if (avg > 2.50 && avg <= 2.99) return "Satisfactory";
+    if (avg >= 1.26 && avg <= 1.99) return "Very Good";
+    if (avg >= 2.0 && avg <= 2.49) return "Good";
+    if (avg >= 2.5 && avg <= 2.99) return "Satisfactory";
     if (avg === 3.0) return "Passing";
     if (avg >= 3.1 && avg <= 5.0) return "Failure";
-
     return "";
-  };
+  }
+
+  // Regular Semesters
+  if (
+    premid === null ||
+    midterm === null ||
+    prefinal === null ||
+    finalterm === null ||
+    premid === 0 ||
+    midterm === 0 ||
+    prefinal === 0 ||
+    finalterm === 0
+  ) {
+    return "Incomplete";
+  }
+
+  const avg = parseFloat(computeFinalGrade(subject));
+  if (avg >= 1.0 && avg <= 1.25) return "Excellent";
+  if (avg >= 1.26 && avg <= 1.99) return "Very Good";
+  if (avg >= 2.0 && avg <= 2.49) return "Good";
+  if (avg >= 2.5 && avg <= 2.99) return "Satisfactory";
+  if (avg === 3.0) return "Passing";
+  if (avg >= 3.1 && avg <= 5.0) return "Failure";
+  return "";
+};
 
 // ✅ Fetch all students
 const fetchStudents = async () => {
@@ -137,6 +183,7 @@ useEffect(() => {
           return;
         }
 
+        console.log(student)
         // ✅ Group student's subjects by school_year + semester
         const grouped = {};
         student.subjects.forEach((subject) => {
@@ -145,6 +192,7 @@ useEffect(() => {
             grouped[key] = {
               school_year: subject.school_year,
               semester: subject.semester,
+              subject_year_level:subject.subject_year_level,
               subjects: [],
             };
           }
@@ -166,7 +214,7 @@ useEffect(() => {
             student_no: student.student_no,
             course: student.course,
             year_level: student.year_level,
-            email: student.email || "N/A",
+            email: student.student_email || "N/A",
           },
           evaluation: Object.values(grouped),
         };
@@ -292,14 +340,14 @@ useEffect(() => {
                 <Typography variant="h6" fontWeight="bold">
                   Student Information
                 </Typography>
-                <Button
+                {/* <Button
                   variant="contained"
                   color="error"
                   startIcon={<PictureAsPdfIcon />}
                   onClick={handlePrintPDF}
                 >
                   Print PDF
-                </Button>
+                </Button> */}
               </Box>
               <Divider sx={{ my: 2 }} />
               <Typography><strong>Name:</strong> {data.student.name}</Typography>
@@ -319,21 +367,21 @@ useEffect(() => {
               <Accordion key={index} sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography variant="h6">
-                    {term.school_year} - {term.semester}
+                    <strong>{term.subject_year_level}/ {term.semester} {term.school_year}</strong>
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell><strong>Subject Code</strong></TableCell>
+                        <TableCell><strong>Course No</strong></TableCell>
                         <TableCell><strong>Description</strong></TableCell>
-                        <TableCell align="center"><strong>Units</strong></TableCell>
-                        <TableCell align="center"><strong>Pre-mid</strong></TableCell>
+                        {/* <TableCell align="center"><strong>Pre-mid</strong></TableCell>
                         <TableCell align="center"><strong>Midterm</strong></TableCell>
                         <TableCell align="center"><strong>Pre-final</strong></TableCell>
-                        <TableCell align="center"><strong>Final</strong></TableCell>
-                        <TableCell align="center"><strong>Average</strong></TableCell>
+                        <TableCell align="center"><strong>Final</strong></TableCell> */}
+                        <TableCell align="center"><strong>Final Grade</strong></TableCell>
+                        <TableCell align="center"><strong>Units</strong></TableCell>
                         <TableCell align="center"><strong>Remark</strong></TableCell>
                       </TableRow>
                     </TableHead>
@@ -342,12 +390,12 @@ useEffect(() => {
                         <TableRow key={i}>
                           <TableCell>{subject.subject_code}</TableCell>
                           <TableCell>{subject.desc_title}</TableCell>
-                          <TableCell align="center">{subject.units}</TableCell>
-                          <TableCell align="center">{subject.premid ?? "-"}</TableCell>
+                          {/* <TableCell align="center">{subject.premid ?? "-"}</TableCell>
                           <TableCell align="center">{subject.midterm ?? "-"}</TableCell>
                           <TableCell align="center">{subject.prefinal ?? "-"}</TableCell>
-                          <TableCell align="center">{subject.finalterm ?? "-"}</TableCell>
+                          <TableCell align="center">{subject.finalterm ?? "-"}</TableCell> */}
                           <TableCell align="center">{subject.average ?? "-"}</TableCell>
+                          <TableCell align="center">{subject.units}</TableCell>
                           <TableCell
                             align="center"
                             sx={{
@@ -365,7 +413,7 @@ useEffect(() => {
                         </TableRow>
                       ))}
                       <TableRow sx={{ backgroundColor: "#f9f9f9" }}>
-                        <TableCell colSpan={2} align="right">
+                        <TableCell colSpan={3} align="right">
                           <strong>Total Units:</strong>
                         </TableCell>
                         <TableCell align="center">

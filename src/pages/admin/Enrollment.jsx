@@ -71,7 +71,8 @@ export default function Enroll() {
     "Bachelor of Science in Business Administration",
     "Bachelor of Science in Criminology",
     "Bachelor of Science in Elementary Education",
-    "Bachelor of Science in Engineering",
+    "Bachelor of Science in Civil Engineering",
+    "Bachelor of Science in Electrical Engineering",
     "Bachelor of Science in Information Technology",
     "Bachelor of Science in Nursing",
     "Bachelor of Science in Social Work",
@@ -200,7 +201,7 @@ export default function Enroll() {
     console.log(response)
     
     if (response.status === true) {
-      setMessage("Enrollment successful!");
+      setMessage("Successfully!");
       setSeverity("success")
       handleClick()
       setSubjectToEnroll(null);
@@ -291,16 +292,16 @@ export default function Enroll() {
                 Register Student
               </Button>
             </Box>
-            {/* <Box sx={{flex: 2}}>
+            <Box sx={{flex: 2}}>
               <Button 
                 variant="contained" 
                 color="primary"
                 sx={{ mb: 2, height: "56px", width:'100%' }}
                 onClick={() => navigate("/list")}
               >
-                View Enrollment List
+                View Student Record
               </Button>
-            </Box> */}
+            </Box>
           </Box>
           <Box
             sx={{
@@ -491,7 +492,7 @@ export default function Enroll() {
             onClick={handleEnroll}
             disabled={!selectedStudent || loading}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Enroll Now'}
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
           </Button>
         </CardActions>
       </Card>

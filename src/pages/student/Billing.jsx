@@ -41,6 +41,7 @@ import "jspdf-autotable";
 import { getAllStudents } from "../../actions/student";
 import { addBilling, getAllBilling, getBillingByStudentId, updateBilling } from "../../actions/billing";
 import AddPaymentDialog from "../../components/AddPaymentDialog";
+import AddPaymentDialogS from "../../components/AddPaymentDialogS";
 
 // Mock fallback students (used if fetch fails)
 const MOCK_STUDENTS = [
@@ -245,6 +246,8 @@ export default function BillingPage() {
     fetchBilling();
   }, [dispatch]);
 
+  const [openAddPayment, setOpenAddPayment] = useState(false);
+  const [addPaymentData, setAddPaymentData] = useState(null);
   const [currentStudent, setCurrentStudent] = useState(null);
   const filteredBilling = billingRecords.filter((billing) => {
     const studentNo = billing.student_no ? billing.student_no.toLowerCase() : "";
@@ -261,6 +264,10 @@ export default function BillingPage() {
     );
   });
 
+    const handleAddPayment = (record) => {
+    setAddPaymentData(record || null);
+    setOpenAddPayment(true);
+  };
   return (
     <Box sx={{ p: 3, bgcolor: "#f4f6f8", minHeight: "100vh" }}>
       {/* Snackbar */}
@@ -336,6 +343,7 @@ export default function BillingPage() {
                   <TableCell align="right">Payment Date</TableCell>
                   <TableCell align="right">OR Number</TableCell>
                   <TableCell align="right">Current Balance</TableCell>
+                  <TableCell align="right">Payment Record</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -353,6 +361,11 @@ export default function BillingPage() {
                     <TableCell align="right"> {r.latestPaymentDate}</TableCell>
                     <TableCell align="right"> {r.referenceNo}</TableCell>
                     <TableCell align="right">₱ {Number(r.current_bill).toLocaleString()}</TableCell>
+                                        <TableCell align="center">
+                                          <IconButton size="small" onClick={() => handleAddPayment(r)} title="Payment Record">
+                                            <AddCardIcon/>
+                                          </IconButton>
+                                        </TableCell>
                   </TableRow>
                 ))}
                 {billingRecords.length === 0 && (
@@ -367,6 +380,11 @@ export default function BillingPage() {
           </TableContainer>
         </CardContent>
       </Card>
+            <AddPaymentDialogS
+              open={openAddPayment}
+              onClose={() => setOpenAddPayment(false)}
+              billingData={addPaymentData}
+            />
     </Box>
   );
 }

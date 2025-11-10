@@ -29,6 +29,7 @@ import {
   getAnnouncements,
   updateAnnouncement,
 } from "../../actions/announcement";
+import ASSETS_URL from "../../API/ASSETS_URL";
 
 // ---------------- Sample Announcement Data ----------------
 const initialAnnouncements = [
@@ -115,7 +116,7 @@ export default function AnnouncementPage() {
           <CampaignIcon fontSize="large" />
         </Badge>
         <Typography variant="h4" fontWeight="bold" ml={2}>
-          Announcements
+          Announcements & Activities
         </Typography>
       </Box>
 
@@ -146,11 +147,23 @@ export default function AnnouncementPage() {
                 }
               >
                 <ListItemText
-                  primary={a.title}
-                  secondary={a.description}
-                  primaryTypographyProps={{
-                    fontWeight: a.isRead ? "normal" : "bold",
-                  }}
+                  primary={
+                    <>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {a.title}
+                      </Typography>
+                      <Typography variant="body2">{a.description}</Typography>
+                      {a.photo_url && (
+                        <Box mt={1}>
+                          <img
+                            src={`${ASSETS_URL}${a.photo_url}`}
+                            alt="Announcement"
+                            style={{ width: "100%", maxWidth: 400, borderRadius: 8 }}
+                          />
+                        </Box>
+                      )}
+                    </>
+                  }
                 />
               </ListItem>
               <Divider />

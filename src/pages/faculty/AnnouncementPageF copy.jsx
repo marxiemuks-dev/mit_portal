@@ -23,25 +23,20 @@ import {
 import CampaignIcon from "@mui/icons-material/Campaign";
 import DoneIcon from "@mui/icons-material/Done";
 import EditIcon from "@mui/icons-material/Edit";
-import ImageIcon from "@mui/icons-material/Image";
 import { useDispatch } from "react-redux";
 import {
   addAnnouncement,
-  deleteAnnouncement,
   getAnnouncements,
   updateAnnouncement,
 } from "../../actions/announcement";
-import ASSETS_URL from "../../API/ASSETS_URL";
-import { Delete } from "@mui/icons-material";
 
+// ---------------- Sample Announcement Data ----------------
 const initialAnnouncements = [
   {
     id: 1,
     title: "School Opening",
     description: "Classes will start on November 4.",
     visibility: "ALL",
-    category: "Announcement",
-    image: "",
     targetUser: null,
     isRead: false,
   },
@@ -58,8 +53,6 @@ export default function AnnouncementPage() {
     title: "",
     description: "",
     visibility: "ALL",
-    category: "Announcement", // 🔹 New
-    image: null, // 🔹 New
     targetUser: "",
   });
 
@@ -68,8 +61,6 @@ export default function AnnouncementPage() {
     title: "",
     description: "",
     visibility: "ALL",
-    category: "Announcement",
-    image: null,
     targetUser: "",
   });
 
@@ -79,10 +70,11 @@ export default function AnnouncementPage() {
     severity: "success",
   });
 
+  // Fetch announcements
   const fetchAnnouncements = async () => {
     try {
       const result = await dispatch(getAnnouncements());
-      console.log(result.data)
+      console.log(result)
       setAnnouncements(result.data);
     } catch (err) {
       console.error("Error fetching announcements:", err);
@@ -93,31 +85,19 @@ export default function AnnouncementPage() {
     fetchAnnouncements();
   }, []);
 
-  const unreadCount = announcements?.filter((a) => !a.isRead)?.length;
+  const unreadCount = announcements.filter((a) => !a.isRead)?.length;
 
-  const [preview, setPreview] = useState(null);
+  // ---------------- Handlers ----------------
   const handleChange = (e, isEdit = false) => {
+    console.log(e.target.name, e.target.value);
     const setter = isEdit ? setEditFormData : setFormData;
     const state = isEdit ? editFormData : formData;
     setter({ ...state, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Handle image upload
-  const handleImageChange = (e, isEdit = false) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const imageUrl = URL.createObjectURL(file);
-    const setter = isEdit ? setEditFormData : setFormData;
-    const state = isEdit ? editFormData : formData;
-    setter({ ...state, image: file });
-    const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result);
-    reader.readAsDataURL(file);
-  };
-
   const handleAdd = async () => {
-    const { title, description, visibility, targetUser, category, image } = formData;
-    if (!title || !description || !visibility || !category) {
+    const { title, description, visibility, targetUser } = formData;
+    if (!title || !description || !visibility) {
       setSnackbar({
         open: true,
         message: "All fields are required!",
@@ -125,11 +105,10 @@ export default function AnnouncementPage() {
       });
       return;
     }
-
     setIsLoading(true);
     try {
       await dispatch(
-        addAnnouncement(title, description, false, targetUser, visibility, category, image)
+        addAnnouncement(title, description, false, targetUser, visibility)
       );
       setSnackbar({
         open: true,
@@ -138,14 +117,7 @@ export default function AnnouncementPage() {
       });
       setAddDialogOpen(false);
       fetchAnnouncements();
-      setFormData({
-        title: "",
-        description: "",
-        visibility: "ALL",
-        category: "Announcement",
-        image: null,
-        targetUser: "",
-      });
+      setFormData({ title: "", description: "", visibility: "ALL", targetUser: "" });
     } catch (err) {
       console.error(err);
       setSnackbar({
@@ -164,29 +136,14 @@ export default function AnnouncementPage() {
       title: a.title,
       description: a.description,
       visibility: a.visibility,
-      category: a.category,
-      image: a.image || null,
       targetUser: a.targetUser || "",
     });
     setEditDialogOpen(true);
   };
-    const handleDelete = async (a) => {
-      try{
-        const result = await dispatch(deleteAnnouncement(a.id));
-        console.log(result)
-        fetchAnnouncements();
-      }catch(error){
-      setSnackbar({
-        open: true,
-        message: "Error Deleting!",
-        severity: "warning",
-      });
-      }
-  };
 
   const handleSaveEdit = async () => {
-    const { id, title, description, visibility, targetUser, category, image } = editFormData;
-    if (!title || !description || !visibility || !category) {
+    const { id, title, description, visibility, targetUser } = editFormData;
+    if (!title || !description || !visibility) {
       setSnackbar({
         open: true,
         message: "All fields are required!",
@@ -196,7 +153,7 @@ export default function AnnouncementPage() {
     }
 
     try {
-      await dispatch(updateAnnouncement(id, title, description, false, targetUser, visibility, category, image));
+      await dispatch(updateAnnouncement(id, title, description, false, targetUser, visibility));
       setSnackbar({
         open: true,
         message: "Announcement updated successfully!",
@@ -224,6 +181,7 @@ export default function AnnouncementPage() {
 
   return (
     <Box sx={{ p: 3, minHeight: "100vh", bgcolor: "#f4f6f8" }}>
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -235,27 +193,29 @@ export default function AnnouncementPage() {
         </Alert>
       </Snackbar>
 
+      {/* Header */}
       <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
         <Badge badgeContent={unreadCount} color="error">
           <CampaignIcon fontSize="large" />
         </Badge>
         <Typography variant="h4" fontWeight="bold" ml={2}>
-          Announcements & Activities
+          Announcements
         </Typography>
         <Button variant="contained" sx={{ ml: "auto" }} onClick={() => setAddDialogOpen(true)}>
-          Add New
+          Add Announcement
         </Button>
       </Box>
 
+      {/* Announcement List */}
       <Paper elevation={2}>
         <List>
-          {announcements?.length === 0 && (
+          {announcements.length === 0 && (
             <ListItem>
               <ListItemText primary="No announcements found." />
             </ListItem>
           )}
 
-          {announcements?.map((a) => (
+          {announcements.map((a) => (
             <React.Fragment key={a.id}>
               <ListItem
                 sx={{
@@ -272,30 +232,15 @@ export default function AnnouncementPage() {
                     <IconButton onClick={() => handleEdit(a)}>
                       <EditIcon color="info" />
                     </IconButton>
-                    <IconButton onClick={() => handleDelete(a)}>
-                      <Delete color="info" />
-                    </IconButton>
                   </Box>
                 }
               >
                 <ListItemText
-                  primary={
-                    <>
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {a.title}
-                      </Typography>
-                      <Typography variant="body2">{a.description}</Typography>
-                      {a.photo_url && (
-                        <Box mt={1}>
-                          <img
-                            src={`${ASSETS_URL}${a.photo_url}`}
-                            alt="Announcement"
-                            style={{ width: "100%", maxWidth: 400, borderRadius: 8 }}
-                          />
-                        </Box>
-                      )}
-                    </>
-                  }
+                  primary={a.title}
+                  secondary={a.description}
+                  primaryTypographyProps={{
+                    fontWeight: a.isRead ? "normal" : "bold",
+                  }}
                 />
               </ListItem>
               <Divider />
@@ -306,7 +251,7 @@ export default function AnnouncementPage() {
 
       {/* ➕ Add Dialog */}
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Announcement / Activity</DialogTitle>
+        <DialogTitle>Add Announcement</DialogTitle>
         <DialogContent>
           <Box display="flex" flexDirection="column" gap={2} mt={1}>
             <TextField
@@ -325,41 +270,6 @@ export default function AnnouncementPage() {
               onChange={(e) => handleChange(e, false)}
               fullWidth
             />
-
-            <TextField
-              select
-              label="Category"
-              name="category"
-              value={formData.category}
-              onChange={(e) => handleChange(e, false)}
-              fullWidth
-            >
-              <MenuItem value="Announcement">Announcement</MenuItem>
-              <MenuItem value="Activity">Activity</MenuItem>
-            </TextField>
-
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<ImageIcon />}
-            >
-              Upload Image
-              <input type="file" hidden onChange={(e) => handleImageChange(e, false)} />
-            </Button>
-            {formData.image ? (
-              <img
-                src={formData.image}
-                alt="Preview"
-                style={{ width: "100%", maxHeight: 200, borderRadius: 8 }}
-              />
-            ): (
-              <img
-                src={preview}
-                alt="Preview"
-                style={{ width: "100%", maxHeight: 200, borderRadius: 8 }}
-              />
-            )}
-
             <TextField
               select
               label="Visibility"
@@ -374,6 +284,16 @@ export default function AnnouncementPage() {
                 </MenuItem>
               ))}
             </TextField>
+            {formData.visibility === "USER" && (
+              <TextField
+                label="Target User ID"
+                name="targetUser"
+                type="number"
+                value={formData.targetUser}
+                onChange={(e) => handleChange(e, false)}
+                fullWidth
+              />
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
@@ -391,7 +311,7 @@ export default function AnnouncementPage() {
 
       {/* ✏️ Edit Dialog */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Announcement / Activity</DialogTitle>
+        <DialogTitle>Edit Announcement</DialogTitle>
         <DialogContent>
           <Box display="flex" flexDirection="column" gap={2} mt={1}>
             <TextField
@@ -410,38 +330,12 @@ export default function AnnouncementPage() {
               onChange={(e) => handleChange(e, true)}
               fullWidth
             />
-
-            <TextField
-              select
-              label="Category"
-              name="category"
-              value={editFormData.category}
-              onChange={(e) => handleChange(e, true)}
-              fullWidth
-            >
-              <MenuItem value="Announcement">Announcement</MenuItem>
-              <MenuItem value="Activity">Activity</MenuItem>
-            </TextField>
-
-            <Button variant="outlined" component="label" startIcon={<ImageIcon />}>
-              Upload New Image
-              <input type="file" hidden onChange={(e) => handleImageChange(e, true)} />
-            </Button>
-            {editFormData.image && (
-              <img
-                src={`${ASSETS_URL}${editFormData.photo_url}`}
-                alt="Preview"
-                style={{ width: "100%", maxHeight: 200, borderRadius: 8 }}
-              />
-            )}
-
             <TextField
               select
               label="Visibility"
               name="visibility"
               value={editFormData.visibility}
               onChange={(e) => handleChange(e, true)}
-              fullWidth
             >
               {["ALL", "FACULTY", "STUDENT", "ADMIN", "REGISTRAR", "CASHIER"].map((v) => (
                 <MenuItem key={v} value={v}>

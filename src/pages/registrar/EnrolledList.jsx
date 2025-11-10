@@ -254,7 +254,7 @@ const handlePrint = () => {
       </Box>
 
       <Typography variant="h4" fontWeight="bold" gutterBottom>
-        Enrolled Students
+        Student Record
       </Typography>
 
       {/* 🔹 Filters */}

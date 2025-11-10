@@ -176,7 +176,7 @@ export default function SchoolCalendar({calendarData}) {
                   {selectedEvents.map((event, index) => (
                     <ListItem key={event.id || index}>
                       <Box>
-                        <Typography fontWeight="bold">• {event.title}</Typography>
+                        <Typography fontWeight="bold">{event.title}</Typography>
                         <Typography variant="body2" color="text.secondary">
                           {event.description}
                         </Typography>

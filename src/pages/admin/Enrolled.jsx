@@ -243,8 +243,16 @@ const handlePrint = () => {
         </Alert>
       </Snackbar>
 
+      <Box display="flex" alignItems="center" mb={2}>
+        <IconButton onClick={() => navigate(-1)}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h6" ml={1}>
+          Back
+        </Typography>
+      </Box>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
-        Enrolled Students
+        Student Record
       </Typography>
 
       {/* 🔹 Filters */}
