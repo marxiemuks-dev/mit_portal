@@ -61,7 +61,7 @@ export default function UserManagement() {
     { field: "last_name", headerName: "Lastname", flex: 2 },
     { field: "first_name", headerName: "Firstname", flex: 2 },
     { field: "middle_name", headerName: "Middlename", flex: 2 },
-    { field: "username", headerName: "Username", flex: 2 },
+    { field: "username", headerName: "Email", flex: 2 },
     { field: "usertype", headerName: "Role", flex: 2 },
     { field: "created_at", headerName: "Created At", flex: 2 },
     {
@@ -350,7 +350,7 @@ export default function UserManagement() {
               <TextField label="Last Name" name="last_name" fullWidth value={formData.last_name || ""} onChange={handleChange} />
             </Grid>
             <Grid item xs={12}>
-              <TextField label="Username" name="username" fullWidth value={formData.username} onChange={handleChange} />
+              <TextField label="Email" name="username" fullWidth value={formData.username} onChange={handleChange} />
             </Grid>
             <Grid item xs={12}>
               <TextField label="Password" type="password" name="password" fullWidth value={formData.password} onChange={handleChange} placeholder={editMode ? "Leave blank to keep current password" : ""} />

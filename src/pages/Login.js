@@ -135,7 +135,7 @@ const Login = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        backgroundImage: 'url("school_v2.jfif")', // 🔹 Replace with your image file
+        backgroundImage: 'url("school.png")', // 🔹 Replace with your image file
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

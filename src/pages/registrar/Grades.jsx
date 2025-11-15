@@ -116,46 +116,52 @@ export default function Grades() {
   const handleGradeChange = (studentId, field, value) => {
 
   };
-
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState(null);
+  const computeFinalGrade = (student) => {
+    const { premid, midterm, prefinal, finalterm } = student;
+    // Helper: round to nearest grade
+    const roundToGrade = (value) => {
+      const gradeScale = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0];
 
-  const computeFinalGrade = (student, subject) => {
-  const { premid, midterm, prefinal, finalterm } = student;
+      // If between 3.0 and 4.0 → round to 5
+      if (value > 3.0 && value <= 4.0) return "5";
 
-  // Handle Summer subjects (only Midterm + Finalterm)
-  if (student?.schedule.semester === "Summer") {
-    if (
-      midterm === null ||
-      finalterm === null ||
-      midterm === 0 ||
-      finalterm === 0
-    ) {
-      return " ";
-    } else {
-      return ((Number(midterm) + Number(finalterm)) / 2).toFixed(2);
+      // If above 4.0 → failing grade
+      if (value > 4.0) return "5";
+
+      // Find closest grade from the scale
+      let closest = gradeScale.reduce((prev, curr) =>
+        Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+      );
+
+      return closest.toFixed(2);
+    };
+
+    // SUMMER: only Midterm + Finalterm
+    if (student?.schedule.semester === "Summer") {
+      if (!midterm || !finalterm) {
+        return " ";
+      }
+
+      const average = (Number(midterm) + Number(finalterm)) / 2;
+      return roundToGrade(average);
     }
-  }
 
-  // Handle Regular Semesters
-  if (
-    premid === null ||
-    midterm === null ||
-    prefinal === null ||
-    finalterm === null ||
-    premid === 0 ||
-    midterm === 0 ||
-    prefinal === 0 ||
-    finalterm === 0
-  ) {
-    return " ";
-  } else {
-    return (
-      (Number(premid) + Number(midterm) + Number(prefinal) + Number(finalterm)) /
-      4
-    ).toFixed(2);
-  }
-};
+    // REGULAR SEMESTER: Premid + Midterm + Prefinal + Final
+    if (!premid || !midterm || !prefinal || !finalterm) {
+      return " ";
+    }
+
+    const average =
+      (Number(premid) +
+        Number(midterm) +
+        Number(prefinal) +
+        Number(finalterm)) /
+      4;
+
+    return roundToGrade(average);
+  };
   const handlePrint = () => {
   if (!selectedSubject || enrolledStudent.length === 0) {
     alert("⚠️ No data to print. Make sure a subject is selected and there are students.");
