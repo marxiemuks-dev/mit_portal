@@ -163,6 +163,7 @@ export default function Grades() {
 
     return roundToGrade(average);
   };
+  
   const handlePrint = () => {
   if (!selectedSubject || enrolledStudent.length === 0) {
     alert("⚠️ No data to print. Make sure a subject is selected and there are students.");
