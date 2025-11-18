@@ -157,16 +157,17 @@ const handlePrint = () => {
   // ---------------- Title ----------------
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("Enrollment List", 297.5, 40, { align: "center" }); // center align (A4 width ~595pt)
+  doc.text("Enrollment List", 297.5, 40, { align: "center" });
 
   // ---------------- Info ----------------
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
+
   const infoText = `Semester: ${semesterFilter} | School Year: ${schoolYearFilter}${
     courseFilter !== "All Courses" ? " | Course: " + courseFilter : ""
   }`;
-  doc.text(infoText, 297.5, 60, { align: "center" });
 
+  doc.text(infoText, 297.5, 60, { align: "center" });
   doc.text(`Total Students: ${filteredEnrollments.length}`, 297.5, 75, { align: "center" });
 
   // ---------------- Table ----------------
@@ -196,9 +197,9 @@ const handlePrint = () => {
     startY: 90,
     head: [tableColumn],
     body: tableRows,
-    theme: "grid", // grid style with borders
+    theme: "grid",
     headStyles: {
-      fillColor: [63, 81, 181], // Material Blue 500
+      fillColor: [63, 81, 181],
       textColor: 255,
       fontStyle: "bold",
       halign: "center",
@@ -209,26 +210,36 @@ const handlePrint = () => {
       halign: "center",
       valign: "middle",
     },
-    alternateRowStyles: {
-      fillColor: [240, 240, 240], // light gray for alternating rows
-    },
+    alternateRowStyles: { fillColor: [240, 240, 240] },
     columnStyles: {
-      2: { halign: "left" }, // left-align Student Name
-      3: { halign: "left" }, // left-align Course
+      2: { halign: "left" },
+      3: { halign: "left" },
     },
     margin: { left: 20, right: 20 },
-    tableWidth: "auto",
   });
 
   // ---------------- Footer ----------------
-  const date = new Date();
-  const formattedDate = date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  const date = new Date().toLocaleString();
   doc.setFontSize(10);
-  doc.text(`Generated on: ${formattedDate}`, 20, doc.internal.pageSize.height - 20);
+  doc.text(`Generated on: ${date}`, 20, doc.internal.pageSize.height - 20);
 
-  // Save PDF
+  // ---------------- Save File ----------------
   doc.save(`Enrollment_List_${semesterFilter}_${schoolYearFilter}.pdf`);
+
+  // ---------------- AUTO PRINT LOGIC ----------------
+  const pdfBlob = doc.output("blob");
+  const pdfURL = URL.createObjectURL(pdfBlob);
+
+  const printWindow = window.open(pdfURL);
+
+  if (printWindow) {
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
 };
+
 
   return (
     <Box sx={{ p: 3, bgcolor: "#f4f6f8", minHeight: "100vh" }}>

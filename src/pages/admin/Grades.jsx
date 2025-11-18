@@ -164,13 +164,13 @@ export default function Grades() {
     return roundToGrade(average);
   };
   
-  const handlePrint = () => {
+const handlePrint = () => {
   if (!selectedSubject || enrolledStudent.length === 0) {
     alert("⚠️ No data to print. Make sure a subject is selected and there are students.");
     return;
   }
 
-  const doc = new jsPDF('p', 'pt', 'a4'); // Portrait, points, A4 size
+  const doc = new jsPDF('p', 'pt', 'a4'); 
   const title = `${selectedSubject.descriptiveTitle} (${selectedSubject.subjectCode})`;
   const teacher = `Teacher: ${selectedSubject.instructor}`;
   const semester = `Semester: ${selectedSubject.semester}`;
@@ -183,35 +183,57 @@ export default function Grades() {
   doc.text(semester, 40, 80);
   doc.text(schoolYear, 40, 100);
 
-  // Prepare table data
-  const tableColumn = ["#", "Student No", "Student Name", "Pre-Mid", "Midterm", "Pre-Final", "Final-Term", "Average"];
-  const tableRows = [];
+  // Table Columns
+  const tableColumn = ["#", "Student No", "Student Name"];
 
-  enrolledStudent.forEach((student, index) => {
-    const studentData = [
+  if (filterSemester !== "Summer") tableColumn.push("Pre-Mid");
+  tableColumn.push("Midterm");
+  if (filterSemester !== "Summer") tableColumn.push("Pre-Final");
+  tableColumn.push("Final-Term");
+
+  tableColumn.push("Average");
+
+  // Row Data
+  const tableRows = enrolledStudent.map((student, index) => {
+    const row = [
       index + 1,
       student.student_no,
-      student.student_name,
-      student.premid,
-      student.midterm,
-      student.prefinal,
-      student.finalterm,
-      computeFinalGrade(student),
+      student.student_name
     ];
-    tableRows.push(studentData);
+
+    if (filterSemester !== "Summer") row.push(student.premid);
+    row.push(student.midterm);
+    if (filterSemester !== "Summer") row.push(student.prefinal);
+    row.push(student.finalterm);
+
+    row.push(computeFinalGrade(student));
+    return row;
   });
 
+  // Render Table
   doc.autoTable({
     head: [tableColumn],
     body: tableRows,
     startY: 120,
     theme: 'grid',
-    headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0] },
+    headStyles: { fillColor: [245, 245, 245] },
     styles: { fontSize: 10, cellPadding: 4 },
   });
 
-  doc.save(`${selectedSubject.subjectCode}_Grades.pdf`);
+  // Auto save + auto print 👇
+  const pdfName = `${selectedSubject.subjectCode}_Grades.pdf`;
+  doc.save(pdfName);
+
+  const pdfURL = doc.output('bloburl');
+  const printWindow = window.open(pdfURL);
+  if (printWindow) {
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
 };
+
 
 
   useEffect(() => {

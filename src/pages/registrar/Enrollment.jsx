@@ -386,7 +386,7 @@ export default function Enroll() {
             {/* Gender */}
             <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%" } }}>
               <FormControl fullWidth size="small" required disabled>
-                <InputLabel id="gender-label">Gender</InputLabel>
+                <InputLabel id="gender-label">Sex</InputLabel>
                 <Select
                   labelId="gender-label"
                   id="gender-select"

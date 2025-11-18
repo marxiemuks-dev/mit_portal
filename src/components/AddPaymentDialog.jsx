@@ -79,7 +79,7 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
     onClose();
   };
 
-  const handleDownloadPDF = () => {
+const handleDownloadPDF = () => {
   if (!billingData) return;
 
   const doc = new jsPDF();
@@ -97,8 +97,8 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
     ["Full Name", billingData.fullName || "N/A"],
     ["Semester", billingData.semester || "N/A"],
     ["School Year", billingData.schoolYear || "N/A"],
-    ["Total Bill", `₱ ${Number(billingData.fullPayment || 0).toLocaleString()}`],
-    ["Current Bill", `₱ ${Number(billingData.current_bill || 0).toLocaleString()}`],
+    ["Total Bill", `PHP ${Number(billingData.fullPayment || 0).toLocaleString()}`],
+    ["Current Bill", `PHP ${Number(billingData.current_bill || 0).toLocaleString()}`],
   ];
   doc.autoTable({
     startY: 35,
@@ -114,14 +114,14 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
       ? billingData.payments.map((p) => [
           p.reference_no || "-",
           p.payment_date || "-",
-          `₱ ${Number(p.amount_paid || 0).toLocaleString()}`,
+          `PHP ${Number(p.amount_paid || 0).toLocaleString()}`,
         ])
       : [["No payments yet", "", ""]];
 
   doc.text("Payment Records", 14, doc.lastAutoTable.finalY + 10);
   doc.autoTable({
     startY: doc.lastAutoTable.finalY + 15,
-    head: [["OR Number", "Date", "Amount (₱)"]],
+    head: [["OR Number", "Date", "Amount (PHP)"]],
     body: paymentData,
     styles: { fontSize: 11 },
     headStyles: { fillColor: [22, 160, 133] },
@@ -133,10 +133,24 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
   doc.text(`Generated on: ${currentDate}`, 14, doc.lastAutoTable.finalY + 15);
   doc.text("Thank you for your payment!", 105, doc.lastAutoTable.finalY + 25, { align: "center" });
 
-  // Save the PDF
-  doc.save(
-    `${billingData.student_no || "Payment"}_${billingData.schoolYear || ""}_receipt.pdf`
-  );
+  // AUTO SAVE + AUTO PRINT
+  const pdfName = `${billingData.student_no || "Payment"}_${billingData.schoolYear || ""}_receipt.pdf`;
+
+  // Save PDF file
+  doc.save(pdfName);
+
+  // Create blob URL for printing
+  const pdfBlob = doc.output("blob");
+  const pdfURL = URL.createObjectURL(pdfBlob);
+
+  const printWindow = window.open(pdfURL);
+
+  if (printWindow) {
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
 };
 
 
@@ -266,7 +280,7 @@ const AddPaymentDialog = ({ open, onClose, billingData }) => {
           color="secondary"
           variant="outlined"
         >
-          Download PDF
+          Print PDF
         </Button>
         <Button onClick={onClose} color="error" variant="outlined">
           Cancel
